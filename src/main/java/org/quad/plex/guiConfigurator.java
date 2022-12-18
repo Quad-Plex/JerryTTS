@@ -1,5 +1,7 @@
 package org.quad.plex;
 
+import marytts.MaryInterface;
+
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -8,30 +10,30 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.util.Locale;
 
 public class guiConfigurator {
     private final Main main;
+    private final MaryInterface mary;
 
     public guiConfigurator(Main main) {
         this.main = main;
+        this.mary = main.getMaryInstance();
     }
 
     void createFrame() {
         // Create a window and add a key listener
         JFrame frame = new JFrame("Shitty AI-Generated TTS v0.420.69");
-        frame.setSize(420, 320); // Set the size to be a little bigger
-        frame.setMinimumSize(new Dimension(420, 320));
+        frame.setSize(500, 350); // Set the size to be a little bigger
+        frame.setMinimumSize(new Dimension(500, 350));
         frame.setLocationRelativeTo(null); // Center the window on the screen
         frame.setLayout(new BorderLayout());
 
         JLabel title = new JLabel("Shitty Text to Speech Program go brrr");
         title.setHorizontalAlignment(0);
+        title.setBorder(BorderFactory.createEmptyBorder(5,0,0,0));
 
         // Add a text input field and a volume slider to the panel
         JTextArea textArea = new JTextArea("Text to speak here");
@@ -51,8 +53,17 @@ public class guiConfigurator {
         volumeSlider.setPaintTicks(true);
         volumeSlider.setPaintLabels(true);
 
+        JSlider speedSlider = new JSlider(JSlider.VERTICAL, -10, 10, main.getSpeedSetting());
+        speedSlider.setMajorTickSpacing(5);
+        speedSlider.setMinorTickSpacing(1);
+        speedSlider.setPaintTicks(true);
+        speedSlider.setPaintLabels(true);
+
         JLabel volumeLabel = new JLabel("Volume");
         volumeLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+
+        JLabel speedLabel = new JLabel("Speed");
+        speedLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
         //create a panel for the volume slider and label
         JPanel volumePanel = new JPanel();
@@ -61,12 +72,24 @@ public class guiConfigurator {
         volumePanel.add(volumeSlider, BorderLayout.NORTH);
         volumePanel.add(volumeLabel, BorderLayout.SOUTH);
 
+        //create a panel for the speed slider and label
+        JPanel speedPanel = new JPanel();
+        speedPanel.setLayout(new BorderLayout());
+        speedPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 20));
+        speedPanel.add(speedSlider, BorderLayout.NORTH);
+        speedPanel.add(speedLabel, BorderLayout.SOUTH);
+
+        JPanel sliderPanel = new JPanel();
+        sliderPanel.setLayout(new FlowLayout());
+        sliderPanel.add(volumePanel);
+        sliderPanel.add(speedPanel);
+
         // Add the buttons to the frame
         JButton speakButton = new JButton("Speak!");
-        speakButton.setPreferredSize(new Dimension(100, 30)); // Make the button a little bigger
+        speakButton.setPreferredSize(new Dimension(75, 30)); // Make the button a little bigger
 
         JButton exportButton = new JButton("Export");
-        exportButton.setPreferredSize(new Dimension(100, 30));
+        exportButton.setPreferredSize(new Dimension(75, 30));
 
         JRadioButton englishButton = new JRadioButton("English");
         englishButton.setActionCommand("english");
@@ -76,22 +99,28 @@ public class guiConfigurator {
         germanButton.setActionCommand("german");
 
         // Add the buttons to a ButtonGroup to ensure that only one button can be selected at a time
-        ButtonGroup group = new ButtonGroup();
-        group.add(englishButton);
-        group.add(germanButton);
+        ButtonGroup languagueButtonGroup = new ButtonGroup();
+        languagueButtonGroup.add(englishButton);
+        languagueButtonGroup.add(germanButton);
+
+        String[] voices = mary.getAvailableVoices(mary.getLocale()).toArray(new String[0]);
+        JComboBox<String> voiceComboBox = new JComboBox<>(voices);
+        voiceComboBox.setSelectedIndex(0);
 
         //create a panel for the buttons
         JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout());
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         buttonPanel.add(speakButton);
         buttonPanel.add(exportButton);
         buttonPanel.add(englishButton);
         buttonPanel.add(germanButton);
+        buttonPanel.add(voiceComboBox);
 
         //add the panels to the frame
         frame.add(title, BorderLayout.NORTH);
         frame.add(textPanel, BorderLayout.CENTER);
-        frame.add(volumePanel, BorderLayout.EAST);
+        frame.add(sliderPanel, BorderLayout.EAST);
         frame.add(buttonPanel, BorderLayout.SOUTH);
 
         volumeSlider.addChangeListener(e -> {
@@ -100,15 +129,27 @@ public class guiConfigurator {
             main.setVolumeSetting(src.getValue());
         });
 
-        englishButton.addActionListener(e -> main.getMaryInstance().setLocale(Locale.US));
+        speedSlider.addChangeListener(e -> {
+            JSlider src = (JSlider) e.getSource();
+            if (src.getValueIsAdjusting()) return;
+            main.setSpeedSetting(src.getValue());
+        });
 
-        germanButton.addActionListener(e -> main.getMaryInstance().setLocale(Locale.GERMAN));
+        englishButton.addActionListener(e -> {
+            mary.setLocale(Locale.US);
+            updateVoiceSelection(voiceComboBox);
+        });
+
+        germanButton.addActionListener(e -> {
+            mary.setLocale(Locale.GERMAN);
+            updateVoiceSelection(voiceComboBox);
+        });
 
         exportButton.addActionListener(e -> {
             String input = textArea.getText();
             try {
                 // Generate the audio data for the given text
-                AudioInputStream audio = main.getMaryInstance().generateAudio(input);
+                AudioInputStream audio = mary.generateAudio(input);
 
                 // Write the audio data to a file in the WAV format
                 File wavFile = new File("output.wav");
@@ -136,7 +177,7 @@ public class guiConfigurator {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER && !e.isShiftDown()) {
                     String input = textArea.getText();
-                    main.speak(input, main.getVolumeSetting());
+                    main.speak(input, main.getVolumeSetting(), main.getSpeedSetting());
                 } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     main.gracefulShutdown();
                 }
@@ -156,7 +197,12 @@ public class guiConfigurator {
         // Add an action listener to the button
         speakButton.addActionListener(e -> {
             String input = textArea.getText();
-            main.speak(input, main.getVolumeSetting());
+            main.speak(input, main.getVolumeSetting(), main.getSpeedSetting());
+        });
+
+        voiceComboBox.addActionListener(e -> {
+            String selectedVoice = (String) voiceComboBox.getSelectedItem();
+            mary.setVoice(selectedVoice);
         });
 
         // Add a window listener to handle the window closing event
@@ -168,5 +214,14 @@ public class guiConfigurator {
         });
 
         frame.setVisible(true); // Call setVisible() after all the components have been added
+    }
+
+    private void updateVoiceSelection(JComboBox<String> voiceComboBox) {
+        // Create a new ComboBoxModel with the updated contents
+        String[] newVoices = mary.getAvailableVoices(mary.getLocale()).toArray(new String[0]);
+        ComboBoxModel<String> model = new DefaultComboBoxModel<>(newVoices);
+
+        // Set the model of the JComboBox to the new ComboBoxModel
+        voiceComboBox.setModel(model);
     }
 }

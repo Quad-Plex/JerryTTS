@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+}
+
+group 'org.quad.plex'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+
+    exclusiveContent {
+        forRepository {
+            maven {
+                url 'https://mlt.jfrog.io/artifactory/mlt-mvn-releases-local'
+            }
+        }
+        filter {
+            includeGroup 'de.dfki.lt.jtok'
+        }
+    }
+}
+
+dependencies {
+    implementation group: 'de.dfki.mary', name: 'voice-cmu-slt-hsmm', version: '5.2.1', {
+        exclude group: 'com.twmacinta', module: 'fast-md5'
+        exclude group: 'gov.nist.math', module: 'Jampack'
+    }
+    implementation group: 'de.dfki.mary', name: 'marytts-lang-de', version: '5.2.1', {
+        exclude group: 'com.twmacinta', module: 'fast-md5'
+        exclude group: 'gov.nist.math', module: 'Jampack'
+    }
+    implementation fileTree(dir: 'ext_libs', includes: ['*.jar'])
+}
+
+test {
+    useJUnitPlatform()
+}

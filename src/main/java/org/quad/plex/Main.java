@@ -14,20 +14,15 @@ import marytts.LocalMaryInterface;
 import marytts.MaryInterface;
 import marytts.exceptions.MaryConfigurationException;
 import marytts.exceptions.SynthesisException;
-import marytts.util.data.audio.AudioPlayer;
 
 import javax.swing.border.Border;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import static java.lang.Thread.sleep;
 
 public class Main extends KeyAdapter {
 
-    private final String punctuation = ".,:-!?";
     private int volumeSetting = 15;
-    private MaryInterface mary;
-    private AudioPlayer player;
+    private final MaryInterface mary;
 
     public static void main(String[] args) throws Exception {
         Main main = new Main();
@@ -54,6 +49,7 @@ public class Main extends KeyAdapter {
         frame.setLayout(new BorderLayout());
 
         JLabel title = new JLabel("Shitty Text to Speech Program go brrr");
+        title.setHorizontalAlignment(0);
 
         // Add a text input field and a volume slider to the panel
         JTextArea textArea = new JTextArea("Text to speak here");
@@ -74,11 +70,12 @@ public class Main extends KeyAdapter {
         volumeSlider.setPaintLabels(true);
 
         JLabel volumeLabel = new JLabel("Volume");
+        volumeLabel.setBorder(BorderFactory.createEmptyBorder(10,0,0,0));
 
         //create a panel for the volume slider and label
         JPanel volumePanel = new JPanel();
         volumePanel.setLayout(new BorderLayout());
-        volumePanel.setBorder(BorderFactory.createEmptyBorder(0,10,0,10));
+        volumePanel.setBorder(BorderFactory.createEmptyBorder(0,10,0,20));
         volumePanel.add(volumeSlider, BorderLayout.NORTH);
         volumePanel.add(volumeLabel, BorderLayout.SOUTH);
 
@@ -103,6 +100,7 @@ public class Main extends KeyAdapter {
 
         //create a panel for the buttons
         JPanel buttonPanel = new JPanel();
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0,0,10,0));
         buttonPanel.add(speakButton);
         buttonPanel.add(exportButton);
         buttonPanel.add(englishButton);
@@ -114,50 +112,39 @@ public class Main extends KeyAdapter {
         frame.add(volumePanel, BorderLayout.EAST);
         frame.add(buttonPanel, BorderLayout.SOUTH);
 
-        volumeSlider.addChangeListener(new ChangeListener() {
-            @Override public void stateChanged(ChangeEvent e) {
-                JSlider src = (JSlider) e.getSource();
-                if (src.getValueIsAdjusting()) return;
-                volumeSetting = src.getValue();
-            }
+        volumeSlider.addChangeListener(e -> {
+            JSlider src = (JSlider) e.getSource();
+            if (src.getValueIsAdjusting()) return;
+            volumeSetting = src.getValue();
         });
 
-        englishButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                mary.setLocale(Locale.US);
-            }
-        });
+        englishButton.addActionListener(e -> mary.setLocale(Locale.US));
 
-        germanButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                mary.setLocale(Locale.GERMAN);
-            }
-        });
+        germanButton.addActionListener(e -> mary.setLocale(Locale.GERMAN));
 
-        exportButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String input = textArea.getText();
-                try {
-                    // Generate the audio data for the given text
-                    AudioInputStream audio = mary.generateAudio(input);
+        exportButton.addActionListener(e -> {
+            String input = textArea.getText();
+            try {
+                // Generate the audio data for the given text
+                AudioInputStream audio = mary.generateAudio(input);
 
-                    // Write the audio data to a file in the WAV format
-                    File wavFile = new File("output.wav");
-                    AudioSystem.write(audio, AudioFileFormat.Type.WAVE, wavFile);
+                // Write the audio data to a file in the WAV format
+                File wavFile = new File("output.wav");
+                AudioSystem.write(audio, AudioFileFormat.Type.WAVE, wavFile);
 
-                    // Get the system clipboard and set the contents to the file that we just created
-                    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                    String filePath = wavFile.getAbsolutePath();
-                    Transferable transferable = new FileTransferable(wavFile);
-                    clipboard.setContents(transferable, null);
-                    // Show a message using a JOptionPane
-                    JOptionPane.showMessageDialog(null, "Speech copied to clipboard", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                // Get the system clipboard and set the contents to the file that we just created
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                Transferable transferable = new FileTransferable(wavFile);
+                clipboard.setContents(transferable, null);
+                JPanel messagePanel = new JPanel();
+
+                //Show a toast message
+                messagePanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+                JLabel messageLabel = new JLabel("Successfully copied speech to clipboard");
+                messagePanel.add(messageLabel);
+                JOptionPane.showMessageDialog(null, messagePanel, "Success", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         });
 
@@ -216,6 +203,7 @@ public class Main extends KeyAdapter {
     private void speak(String input, float volume) {
         if (volume == 0) return;
         // Check if the input string already ends with a punctuation mark
+        String punctuation = ".,:-!?";
         if (!punctuation.contains(input.subSequence(input.length()-1, input.length()))) {
             // If not, add a period to the end of the string
             input = input + ".";

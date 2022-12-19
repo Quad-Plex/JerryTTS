@@ -192,7 +192,7 @@ public class guiConfigurator {
         textArea.addKeyListener(new KeyListener() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER && !e.isShiftDown()) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER && (!e.isShiftDown() && e.isControlDown())) {
                     String input = textArea.getText();
                     main.speak(input);
                 } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {

@@ -2,6 +2,7 @@ package org.quad.plex;
 
 import java.awt.event.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -35,6 +36,14 @@ public class Main extends KeyAdapter {
 
     void gracefulShutdown() {
         // Exit gracefully
+        File wavFile = new File("temp\\export.wav");
+        if (wavFile.exists()) {
+            boolean success = wavFile.delete();
+            if (!success) {
+                System.err.println("Failed to delete exported .wav file!");
+            }
+        }
+
         mary.setLocale(Locale.US);
         speak("Goodbye!");
         try {
@@ -46,9 +55,12 @@ public class Main extends KeyAdapter {
     }
 
     void speak(String input) {
-        // Check if the input string already ends with a punctuation mark
-        if (!punctuation.contains(input.subSequence(input.length()-1, input.length()))) {
-            // If not, add a period to the end of the string
+        // Check if there is any input to speak, otherwise return
+        if (input.isEmpty()) {
+            return;
+        } else if (!punctuation.contains(input.subSequence(input.length()-1, input.length()))) {
+            //If there is input, check if it ends in punctuation, if it doesn't, add a period
+            //this causes MaryTTS to behave more predictably when speaking as it sees a finished sentence
             input = input + ".";
         }
 
@@ -79,6 +91,8 @@ public class Main extends KeyAdapter {
                 ex.printStackTrace();
             } catch (LineUnavailableException | IOException e) {
                 throw new RuntimeException(e);
+            } catch (Exception e) {
+                System.out.println("General exception occured while speaking: " + e.getMessage());
             }
         }).start();
     }

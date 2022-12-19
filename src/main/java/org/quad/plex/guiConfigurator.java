@@ -184,19 +184,13 @@ public class guiConfigurator {
                 AudioInputStream audio = mary.generateAudio(input);
 
                 // Write the audio data to a file in the WAV format
-                File wavFile = new File("output.wav");
+                File wavFile = new File("temp\\export.wav");
                 AudioSystem.write(audio, AudioFileFormat.Type.WAVE, wavFile);
 
                 // Get the system clipboard and set the contents to the file that we just created
                 Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                 Transferable transferable = new FileTransferable(wavFile);
                 clipboard.setContents(transferable, null);
-                if (wavFile.exists()) {
-                    boolean success = wavFile.delete();
-                    if (!success) {
-                        System.err.println("Failed to delete exported .wav file!");
-                    }
-                }
 
                 //Show a toast message
                 JPanel messagePanel = new JPanel();

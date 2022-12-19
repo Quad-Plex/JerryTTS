@@ -8,6 +8,7 @@
 
 package org.quad.plex;
 
+@SuppressWarnings({"unused", "UnusedReturnValue"})
 public class Sonic {
 
     private static final int SONIC_MIN_PITCH = 65;

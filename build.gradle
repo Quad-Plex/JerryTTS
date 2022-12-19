@@ -12,6 +12,7 @@ repositories {
 
     exclusiveContent {
         forRepository {
+            //noinspection ForeignDelegate
             maven {
                 url 'https://mlt.jfrog.io/artifactory/mlt-mvn-releases-local'
             }
@@ -41,7 +42,15 @@ test {
 
 javafx {
     version = "19"
-    modules = [ 'javafx.media', 'javafx.swing' ]
+    modules = [ 'javafx.media', 'javafx.controls' ]
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDirs = ['src/main/java', 'src/main/resources']
+        }
+    }
 }
 
 

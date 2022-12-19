@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
 }
 
 group 'org.quad.plex'
@@ -29,11 +31,17 @@ dependencies {
         exclude group: 'com.twmacinta', module: 'fast-md5'
         exclude group: 'gov.nist.math', module: 'Jampack'
     }
+
     implementation fileTree(dir: 'ext_libs', includes: ['*.jar'])
 }
 
 test {
     useJUnitPlatform()
+}
+
+javafx {
+    version = "19"
+    modules = [ 'javafx.media', 'javafx.swing' ]
 }
 
 

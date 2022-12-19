@@ -1,10 +1,16 @@
 package org.quad.plex;
 
 import java.awt.event.*;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
 import javax.sound.sampled.*;
+
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.embed.swing.JFXPanel;
 
 import marytts.LocalMaryInterface;
 import marytts.MaryInterface;
@@ -14,16 +20,20 @@ import marytts.exceptions.SynthesisException;
 import static java.lang.Thread.sleep;
 
 public class Main extends KeyAdapter {
-
-    private int volumeSetting = 15;
-    private int speedSetting = 1;
     private static final String punctuation = ".,:-!?";
     private final MaryInterface mary = new LocalMaryInterface();
+
+    private static MediaPlayer mediaPlayer;
+    private float volume = 0.69F;
+    private float rate = 1.0F;
+
+    //This panel needs to be instantiated in order for the JavaFX library to initialize
+    private static final JFXPanel fxPanel = new JFXPanel();
 
     public Main() throws MaryConfigurationException {
         org.quad.plex.guiConfigurator guiConfigurator = new guiConfigurator(this);
         guiConfigurator.createFrame();
-        speak("Shitty T T S version 0.4 20.69 initialized.", volumeSetting, speedSetting);
+        speak("Shitty T T S version 0.4 20.69 initialized.");
     }
 
     public static void main(String[] args) throws Exception {
@@ -33,7 +43,7 @@ public class Main extends KeyAdapter {
     void gracefulShutdown() {
         // Exit gracefully
         mary.setLocale(Locale.US);
-        speak("Goodbye!", volumeSetting, speedSetting);
+        speak("Goodbye!");
         try {
             sleep(1600);
         } catch (InterruptedException ex) {
@@ -42,9 +52,7 @@ public class Main extends KeyAdapter {
         System.exit(0);
     }
 
-    void speak(String input, float volume, float speed) {
-        if (volume == 0) return;
-
+    void speak(String input) {
         // Check if the input string already ends with a punctuation mark
         if (!punctuation.contains(input.subSequence(input.length()-1, input.length()))) {
             // If not, add a period to the end of the string
@@ -55,73 +63,37 @@ public class Main extends KeyAdapter {
         new Thread(() -> {
             try {
                 // Generate audio data for the input text
-                AudioInputStream audio = mary.generateAudio(finalInput);
+                AudioInputStream audioInputStream = mary.generateAudio(finalInput);
 
-                // Get the audio format
-                AudioFormat format = audio.getFormat();
+                File wavFile = new File("temp\\output.wav");
+                wavFile.getParentFile().mkdir();
+                AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, wavFile);
+                Media media = new Media(wavFile.toURI().toASCIIString());
 
-                // Calculate the new sample rate based on the desired speed
-                float newSampleRate = format.getSampleRate() * speed;
-
-                // Create a new audio format with the modified sample rate
-                AudioFormat newFormat = new AudioFormat(format.getEncoding(), newSampleRate, format.getSampleSizeInBits(),
-                        format.getChannels(), format.getFrameSize(), newSampleRate,
-                        format.isBigEndian());
-
-                // Create a new audio input stream with the modified audio format
-                AudioInputStream newAudio = AudioSystem.getAudioInputStream(newFormat, audio);
-
-                // Create a source data line
-                SourceDataLine line = AudioSystem.getSourceDataLine(newFormat);
-                line.open(newFormat);
-                line.start();
-
-                // Set the volume of the source data line
-                Control gainControl = line.getControl(FloatControl.Type.MASTER_GAIN);
-                if (gainControl instanceof FloatControl floatControl) {
-                    floatControl.setValue(volume-24);
-                }
-
-                // Write the audio data to the source data line
-                int numBytesRead = 0;
-                byte[] data = new byte[line.getBufferSize() / 5];
-                while (numBytesRead != -1) {
-                    numBytesRead = newAudio.read(data, 0, data.length);
-                    if (numBytesRead >= 0) {
-                        line.write(data, 0, numBytesRead);
-                    }
-                }
-
-                // Close the source data line
-                line.drain();
-                line.close();
-
+                mediaPlayer = new MediaPlayer(media);
+                mediaPlayer.setVolume(volume);
+                mediaPlayer.setRate(rate);
+                mediaPlayer.play();
             } catch (SynthesisException ex) {
                 System.err.println("Error speaking text: " + ex.getMessage());
                 ex.printStackTrace();
-            } catch (LineUnavailableException | IOException e) {
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }).start();
     }
 
-    public int getVolumeSetting() {
-        return volumeSetting;
+    public void setVolume(int value) {
+        volume = (float) value / 100;
+        mediaPlayer.setVolume(volume);
     }
 
-    public void setVolumeSetting(int value) {
-        volumeSetting = value;
+    public void setSpeed(int value) {
+        rate = (float) value / 100;
+        mediaPlayer.setRate(rate);
     }
 
     public MaryInterface getMaryInstance() {
         return mary;
-    }
-
-    public int getSpeedSetting() {
-        return speedSetting;
-    }
-
-    public void setSpeedSetting(int value) {
-        speedSetting = value;
     }
 }

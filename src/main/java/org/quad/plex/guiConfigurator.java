@@ -47,15 +47,17 @@ public class guiConfigurator {
         textPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         textPanel.add(textArea);
 
-        JSlider volumeSlider = new JSlider(JSlider.VERTICAL, 0, 30, main.getVolumeSetting());
+        int volumeSetting = 69;
+        JSlider volumeSlider = new JSlider(JSlider.VERTICAL, 0, 100, volumeSetting);
         volumeSlider.setMajorTickSpacing(5);
         volumeSlider.setMinorTickSpacing(1);
         volumeSlider.setPaintTicks(true);
         volumeSlider.setPaintLabels(true);
 
-        JSlider speedSlider = new JSlider(JSlider.VERTICAL, -10, 10, main.getSpeedSetting());
-        speedSlider.setMajorTickSpacing(5);
-        speedSlider.setMinorTickSpacing(1);
+        int speedSetting = 100;
+        JSlider speedSlider = new JSlider(JSlider.VERTICAL, 0, 300, speedSetting);
+        speedSlider.setMajorTickSpacing(20);
+        speedSlider.setMinorTickSpacing(10);
         speedSlider.setPaintTicks(true);
         speedSlider.setPaintLabels(true);
 
@@ -125,14 +127,12 @@ public class guiConfigurator {
 
         volumeSlider.addChangeListener(e -> {
             JSlider src = (JSlider) e.getSource();
-            if (src.getValueIsAdjusting()) return;
-            main.setVolumeSetting(src.getValue());
+            main.setVolume(src.getValue());
         });
 
         speedSlider.addChangeListener(e -> {
             JSlider src = (JSlider) e.getSource();
-            if (src.getValueIsAdjusting()) return;
-            main.setSpeedSetting(src.getValue());
+            main.setSpeed(src.getValue());
         });
 
         englishButton.addActionListener(e -> {
@@ -159,9 +159,15 @@ public class guiConfigurator {
                 Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                 Transferable transferable = new FileTransferable(wavFile);
                 clipboard.setContents(transferable, null);
-                JPanel messagePanel = new JPanel();
+                if (wavFile.exists()) {
+                    boolean success = wavFile.delete();
+                    if (!success) {
+                        System.err.println("Failed to delete exported .wav file!");
+                    }
+                }
 
                 //Show a toast message
+                JPanel messagePanel = new JPanel();
                 messagePanel.setLayout(new FlowLayout(FlowLayout.CENTER));
                 JLabel messageLabel = new JLabel("Successfully copied speech to clipboard");
                 messagePanel.add(messageLabel);
@@ -177,7 +183,7 @@ public class guiConfigurator {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER && !e.isShiftDown()) {
                     String input = textArea.getText();
-                    main.speak(input, main.getVolumeSetting(), main.getSpeedSetting());
+                    main.speak(input);
                 } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     main.gracefulShutdown();
                 }
@@ -197,7 +203,7 @@ public class guiConfigurator {
         // Add an action listener to the button
         speakButton.addActionListener(e -> {
             String input = textArea.getText();
-            main.speak(input, main.getVolumeSetting(), main.getSpeedSetting());
+            main.speak(input);
         });
 
         voiceComboBox.addActionListener(e -> {

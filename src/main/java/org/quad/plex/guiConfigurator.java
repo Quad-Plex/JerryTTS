@@ -12,6 +12,8 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.io.File;
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.Locale;
 
 public class guiConfigurator {
@@ -49,14 +51,23 @@ public class guiConfigurator {
 
         int volumeSetting = 69;
         JSlider volumeSlider = new JSlider(JSlider.VERTICAL, 0, 100, volumeSetting);
-        volumeSlider.setMajorTickSpacing(5);
+        volumeSlider.setMajorTickSpacing(10);
         volumeSlider.setMinorTickSpacing(1);
         volumeSlider.setPaintTicks(true);
         volumeSlider.setPaintLabels(true);
 
         int speedSetting = 100;
         JSlider speedSlider = new JSlider(JSlider.VERTICAL, 0, 300, speedSetting);
-        speedSlider.setMajorTickSpacing(20);
+        Dictionary<Integer, JLabel> labels = new Hashtable<>();
+        labels.put(0, new JLabel("0x"));
+        labels.put(50, new JLabel("0.5x"));
+        labels.put(100, new JLabel("1x"));
+        labels.put(150, new JLabel("1.5x"));
+        labels.put(200, new JLabel("2x"));
+        labels.put(250, new JLabel("2.5x"));
+        labels.put(300, new JLabel("3x"));
+        speedSlider.setLabelTable(labels);
+        speedSlider.setMajorTickSpacing(50);
         speedSlider.setMinorTickSpacing(10);
         speedSlider.setPaintTicks(true);
         speedSlider.setPaintLabels(true);

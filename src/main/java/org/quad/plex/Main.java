@@ -2,15 +2,10 @@ package org.quad.plex;
 
 import java.awt.event.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
 import javax.sound.sampled.*;
-
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
-import javafx.embed.swing.JFXPanel;
 
 import marytts.LocalMaryInterface;
 import marytts.MaryInterface;
@@ -23,12 +18,10 @@ public class Main extends KeyAdapter {
     private static final String punctuation = ".,:-!?";
     private final MaryInterface mary = new LocalMaryInterface();
 
-    private static MediaPlayer mediaPlayer;
+    private static Sonic sonic;
     private float volume = 0.69F;
-    private float rate = 1.0F;
-
-    //This panel needs to be instantiated in order for the JavaFX library to initialize
-    private static final JFXPanel fxPanel = new JFXPanel();
+    private float pitch = 1.0F;
+    private float speed = 1.0F;
 
     public Main() throws MaryConfigurationException {
         org.quad.plex.guiConfigurator guiConfigurator = new guiConfigurator(this);
@@ -59,38 +52,91 @@ public class Main extends KeyAdapter {
             input = input + ".";
         }
 
+        float rate = 1.0f;
+        boolean emulateChordPitch = false;
+        int quality = 0;
+
         String finalInput = input;
         new Thread(() -> {
             try {
                 // Generate audio data for the input text
-                AudioInputStream audioInputStream = mary.generateAudio(finalInput);
+                AudioInputStream speechStream = mary.generateAudio(finalInput);
 
-                File wavFile = new File("temp\\output.wav");
-                wavFile.getParentFile().mkdir();
-                AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, wavFile);
-                Media media = new Media(wavFile.toURI().toASCIIString());
-
-                mediaPlayer = new MediaPlayer(media);
-                mediaPlayer.setVolume(volume);
-                mediaPlayer.setRate(rate);
-                mediaPlayer.play();
+                AudioFormat format = speechStream.getFormat();
+                int sampleRate = (int)format.getSampleRate();
+                int numChannels = format.getChannels();
+                SourceDataLine.Info info = new DataLine.Info(SourceDataLine.class, format,
+                        ((int)speechStream.getFrameLength()*format.getFrameSize()));
+                SourceDataLine line = (SourceDataLine)AudioSystem.getLine(info);
+                line.open(speechStream.getFormat());
+                line.start();
+                runSonic(speechStream, line, speed, this.pitch, rate, volume, emulateChordPitch, quality,
+                        sampleRate, numChannels);
+                line.drain();
+                line.stop();
             } catch (SynthesisException ex) {
                 System.err.println("Error speaking text: " + ex.getMessage());
                 ex.printStackTrace();
-            } catch (IOException e) {
+            } catch (LineUnavailableException | IOException e) {
                 throw new RuntimeException(e);
             }
         }).start();
     }
 
+    // Run sonic.
+    private static void runSonic(
+            AudioInputStream audioStream,
+            SourceDataLine line,
+            float speed,
+            float pitch,
+            float rate,
+            float volume,
+            boolean emulateChordPitch,
+            int quality,
+            int sampleRate,
+            int numChannels) throws IOException
+    {
+        sonic = new Sonic(sampleRate, numChannels);
+        int bufferSize = line.getBufferSize();
+        byte[] inBuffer = new byte[bufferSize];
+        byte[] outBuffer = new byte[bufferSize];
+        int numRead, numWritten;
+
+        sonic.setSpeed(speed);
+        sonic.setPitch(pitch);
+        sonic.setRate(rate);
+        sonic.setVolume(volume);
+        sonic.setChordPitch(emulateChordPitch);
+        sonic.setQuality(quality);
+        do {
+            numRead = audioStream.read(inBuffer, 0, bufferSize);
+            if(numRead <= 0) {
+                sonic.flushStream();
+            } else {
+                sonic.writeBytesToStream(inBuffer, numRead);
+            }
+            do {
+                numWritten = sonic.readBytesFromStream(outBuffer, bufferSize);
+                if(numWritten > 0) {
+                    line.write(outBuffer, 0, numWritten);
+                }
+            } while(numWritten > 0);
+        } while(numRead > 0);
+    }
+
     public void setVolume(int value) {
         volume = (float) value / 100;
-        mediaPlayer.setVolume(volume);
+        sonic.setVolume(volume);
     }
 
     public void setSpeed(int value) {
-        rate = (float) value / 100;
-        mediaPlayer.setRate(rate);
+        speed = (float) value / 100;
+        sonic.setSpeed(speed);
+    }
+
+    public void setPitch(int value) {
+        pitch = (float) value / 100;
+        sonic.setPitch(pitch);
     }
 
     public MaryInterface getMaryInstance() {

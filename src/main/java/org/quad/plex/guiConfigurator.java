@@ -29,7 +29,7 @@ public class guiConfigurator {
         // Create a window and add a key listener
         JFrame frame = new JFrame("Shitty AI-Generated TTS v0.420.69");
         frame.setSize(500, 350); // Set the size to be a little bigger
-        frame.setMinimumSize(new Dimension(500, 350));
+        frame.setMinimumSize(new Dimension(500, 420));
         frame.setLocationRelativeTo(null); // Center the window on the screen
         frame.setLayout(new BorderLayout());
 
@@ -49,53 +49,69 @@ public class guiConfigurator {
         textPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         textPanel.add(textArea);
 
+        Dictionary<Integer, JLabel> volumeLabels = new Hashtable<>();
+        for (int i = 0; i <= 200; i += 25) {
+            volumeLabels.put(i, new JLabel(i + "%"));
+        }
         int volumeSetting = 69;
-        JSlider volumeSlider = new JSlider(JSlider.VERTICAL, 0, 100, volumeSetting);
-        volumeSlider.setMajorTickSpacing(10);
+        JSlider volumeSlider = new JSlider(JSlider.VERTICAL, 0, 200, volumeSetting);
+        volumeSlider.setLabelTable(volumeLabels);
+        volumeSlider.setMajorTickSpacing(25);
         volumeSlider.setMinorTickSpacing(1);
         volumeSlider.setPaintTicks(true);
         volumeSlider.setPaintLabels(true);
 
+        Dictionary<Integer, JLabel> multiplierLabels = new Hashtable<>();
+        multiplierLabels.put(1, new JLabel("0.01x"));
+        for (int i = 0; i <= 500; i += 50) {
+            multiplierLabels.put(i, new JLabel(String.format(Locale.US, "%.1fx", i / 100.0)));
+        }
         int speedSetting = 100;
-        JSlider speedSlider = new JSlider(JSlider.VERTICAL, 0, 300, speedSetting);
-        Dictionary<Integer, JLabel> labels = new Hashtable<>();
-        labels.put(0, new JLabel("0x"));
-        labels.put(50, new JLabel("0.5x"));
-        labels.put(100, new JLabel("1x"));
-        labels.put(150, new JLabel("1.5x"));
-        labels.put(200, new JLabel("2x"));
-        labels.put(250, new JLabel("2.5x"));
-        labels.put(300, new JLabel("3x"));
-        speedSlider.setLabelTable(labels);
+        JSlider speedSlider = new JSlider(JSlider.VERTICAL, 1, 500, speedSetting);
+        speedSlider.setLabelTable(multiplierLabels);
         speedSlider.setMajorTickSpacing(50);
         speedSlider.setMinorTickSpacing(10);
         speedSlider.setPaintTicks(true);
         speedSlider.setPaintLabels(true);
 
-        JLabel volumeLabel = new JLabel("Volume");
-        volumeLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        int pitchSetting = 100;
+        JSlider pitchSlider = new JSlider(JSlider.VERTICAL, 1, 500, pitchSetting);
+        pitchSlider.setLabelTable(multiplierLabels);
+        pitchSlider.setMajorTickSpacing(50);
+        pitchSlider.setMinorTickSpacing(10);
+        pitchSlider.setPaintTicks(true);
+        pitchSlider.setPaintLabels(true);
 
+        JLabel volumeLabel = new JLabel("Volume");
         JLabel speedLabel = new JLabel("Speed");
-        speedLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        JLabel pitchLabel = new JLabel("Pitch");
 
         //create a panel for the volume slider and label
         JPanel volumePanel = new JPanel();
         volumePanel.setLayout(new BorderLayout());
-        volumePanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 20));
-        volumePanel.add(volumeSlider, BorderLayout.NORTH);
+        volumePanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
+        volumePanel.add(volumeSlider, BorderLayout.CENTER);
         volumePanel.add(volumeLabel, BorderLayout.SOUTH);
 
         //create a panel for the speed slider and label
         JPanel speedPanel = new JPanel();
         speedPanel.setLayout(new BorderLayout());
-        speedPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 20));
-        speedPanel.add(speedSlider, BorderLayout.NORTH);
+        speedPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
+        speedPanel.add(speedSlider, BorderLayout.CENTER);
         speedPanel.add(speedLabel, BorderLayout.SOUTH);
 
+        //create a panel for the rate slider and label
+        JPanel pitchPanel = new JPanel();
+        pitchPanel.setLayout(new BorderLayout());
+        pitchPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+        pitchPanel.add(pitchSlider, BorderLayout.CENTER);
+        pitchPanel.add(pitchLabel, BorderLayout.SOUTH);
+
         JPanel sliderPanel = new JPanel();
-        sliderPanel.setLayout(new FlowLayout());
-        sliderPanel.add(volumePanel);
-        sliderPanel.add(speedPanel);
+        sliderPanel.setLayout(new BorderLayout());
+        sliderPanel.add(volumePanel, BorderLayout.WEST);
+        sliderPanel.add(speedPanel, BorderLayout.CENTER);
+        sliderPanel.add(pitchPanel, BorderLayout.EAST);
 
         // Add the buttons to the frame
         JButton speakButton = new JButton("Speak!");
@@ -144,6 +160,11 @@ public class guiConfigurator {
         speedSlider.addChangeListener(e -> {
             JSlider src = (JSlider) e.getSource();
             main.setSpeed(src.getValue());
+        });
+
+        pitchSlider.addChangeListener(e -> {
+            JSlider src = (JSlider) e.getSource();
+            main.setPitch(src.getValue());
         });
 
         englishButton.addActionListener(e -> {

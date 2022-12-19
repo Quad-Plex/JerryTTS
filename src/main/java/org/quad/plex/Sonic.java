@@ -822,7 +822,13 @@ public class Sonic {
         int overflowCount = 0;
 
         for (i = 0; i < SINC_FILTER_POINTS; i++) {
-            weight = findSincCoefficient(i, ratio, width);
+            try {
+                weight = findSincCoefficient(i, ratio, width);
+            } catch (Exception e) {
+                //Very dirty hack, this allows us to change the Rate downwards while the audio is playing
+                //Probably introduces some artifacts due to just returning a constant but eh, seems to work fine
+                weight = 0;
+            }
             /* printf("%u %f\n", i, weight); */
             value = in[inPos + i*numChannels]*weight;
             oldSign = getSign(total);

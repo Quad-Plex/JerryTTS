@@ -23,6 +23,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 import marytts.MaryInterface;
 
 import javax.sound.sampled.AudioFileFormat;
@@ -62,6 +63,7 @@ public class TTSApplication extends Application {
         // Add a text input field
         TextArea textArea = new javafx.scene.control.TextArea("Text to speak here");
         textArea.setWrapText(true);
+        textArea.setFont(new Font("Verdana", 12));
         textArea.setStyle("-fx-border-color: black;");
         HBox textBox = new HBox();
         textBox.setAlignment(Pos.CENTER);
@@ -71,9 +73,9 @@ public class TTSApplication extends Application {
         int volumeSetting = 69;
         Slider volumeSlider = new Slider(0, 200, volumeSetting);
         volumeSlider.setOrientation(Orientation.VERTICAL);
-        volumeSlider.setPadding(new Insets(45,10,35,10));
-        volumeSlider.setScaleY(1.4);
-        volumeSlider.setScaleX(1.4);
+        volumeSlider.setPadding(new Insets(40,10,30,0));
+        volumeSlider.setScaleY(1.3);
+        volumeSlider.setScaleX(1.3);
         volumeSlider.setSnapToTicks(true);
         volumeSlider.setPrefHeight(500);
         volumeSlider.setMajorTickUnit(25);
@@ -81,12 +83,26 @@ public class TTSApplication extends Application {
         volumeSlider.setShowTickMarks(true);
         volumeSlider.setShowTickLabels(true);
 
+        // create a StringConverter to convert the slider values to percentage labels
+        StringConverter<Double> percentageConverter = new StringConverter<>() {
+            @Override
+            public String toString(Double value) {
+                // format the label as a percentage
+                return String.format("%d%%", value.intValue());
+            }
+            @Override
+            public Double fromString(String string) { return null; }
+        };
+
+        // set the label formatter for the major tick marks
+        volumeSlider.setLabelFormatter(percentageConverter);
+
         int speedSetting = 100;
         Slider speedSlider = new Slider(0, 500, speedSetting);
         speedSlider.setOrientation(Orientation.VERTICAL);
-        speedSlider.setPadding(new Insets(45,10,35,10));
-        speedSlider.setScaleY(1.4);
-        speedSlider.setScaleX(1.4);
+        speedSlider.setPadding(new Insets(40,10,30,10));
+        speedSlider.setScaleY(1.3);
+        speedSlider.setScaleX(1.3);
         speedSlider.setSnapToTicks(true);
         speedSlider.setPrefHeight(500);
         speedSlider.setMajorTickUnit(50);
@@ -94,40 +110,60 @@ public class TTSApplication extends Application {
         speedSlider.setShowTickMarks(true);
         speedSlider.setShowTickLabels(true);
 
+        // create a StringConverter to convert the slider values to "x.xx" labels
+        StringConverter<Double> multiplierConverter = new StringConverter<>() {
+            @Override
+            public String toString(Double value) {
+                // format the label as "x.xx"
+                return String.format("%.2fx", value / 100);
+            }
+
+            @Override
+            public Double fromString(String string) { return null; }
+        };
+        // set the label formatter for the major tick marks
+        speedSlider.setLabelFormatter(multiplierConverter);
+
         int pitchSetting = 100;
         Slider pitchSlider = new Slider(0, 500, pitchSetting);
         pitchSlider.setOrientation(Orientation.VERTICAL);
-        pitchSlider.setPadding(new Insets(45,10,35,10));
-        pitchSlider.setScaleY(1.4);
-        pitchSlider.setScaleX(1.4);
+        pitchSlider.setPadding(new Insets(40,20,30,10));
+        pitchSlider.setScaleY(1.3);
+        pitchSlider.setScaleX(1.3);
         pitchSlider.setSnapToTicks(true);
         pitchSlider.setPrefHeight(500);
         pitchSlider.setMajorTickUnit(50);
         pitchSlider.setMinorTickCount(10);
         pitchSlider.setShowTickMarks(true);
         pitchSlider.setShowTickLabels(true);
+        pitchSlider.setLabelFormatter(multiplierConverter);
 
         Label volumeLabel = new javafx.scene.control.Label("Volume");
+        volumeLabel.setFont(new Font("Verdana", 13));
         Label speedLabel = new javafx.scene.control.Label("Speed");
+        speedLabel.setFont(new Font("Verdana", 13));
+        speedLabel.setPadding(new Insets(0,0,0,10));
         Label pitchLabel = new javafx.scene.control.Label("Pitch");
+        pitchLabel.setPadding(new Insets(0,0,0,10));
+        pitchLabel.setFont(new Font("Verdana", 13));
 
         VBox volumeBox = new VBox();
         volumeBox.setSpacing(10);
-        volumeBox.setPadding(new Insets(0,0,10,0));
+        volumeBox.setPadding(new Insets(0,0,10,10));
         volumeBox.getChildren().add(volumeSlider);
         volumeBox.getChildren().add(volumeLabel);
 
         //create a panel for the speed slider and label
         VBox speedBox = new VBox();
         speedBox.setSpacing(10);
-        speedBox.setPadding(new Insets(0,0,10,0));
+        speedBox.setPadding(new Insets(0,0,10,10));
         speedBox.getChildren().add(speedSlider);
         speedBox.getChildren().add(speedLabel);
 
         //create a panel for the rate slider and label
         VBox pitchBox = new VBox();
         pitchBox.setSpacing(10);
-        pitchBox.setPadding(new Insets(0,0,10,0));
+        pitchBox.setPadding(new Insets(0,0,10,10));
         pitchBox.getChildren().add(pitchSlider);
         pitchBox.getChildren().add(pitchLabel);
 

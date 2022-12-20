@@ -15,6 +15,7 @@ import static java.lang.Thread.sleep;
 
 public class TTSUtils {
 
+    public static boolean STOP = false;
     private static final String punctuation = ".,:-!?";
     private static final MaryInterface mary;
 
@@ -30,6 +31,7 @@ public class TTSUtils {
     private float volume = 0.69F;
     private float pitch = 1.0F;
     private float speed = 1.0F;
+
     void speak(String input) {
         // Check if there is any input to speak, otherwise return
         if (input.isEmpty()) {
@@ -74,7 +76,7 @@ public class TTSUtils {
     }
 
     // Run sonic.
-    private static void runSonic(
+    private void runSonic(
             AudioInputStream audioStream,
             SourceDataLine line,
             float speed,
@@ -98,7 +100,9 @@ public class TTSUtils {
         sonic.setVolume(volume);
         sonic.setChordPitch(emulateChordPitch);
         sonic.setQuality(quality);
+        TTSApplication.running.set(true);
         do {
+            if (STOP || !TTSApplication.running.get()) { TTSApplication.running.set(false); STOP=false; return; }
             numRead = audioStream.read(inBuffer, 0, bufferSize);
             if(numRead <= 0) {
                 sonic.flushStream();
@@ -112,6 +116,7 @@ public class TTSUtils {
                 }
             } while(numWritten > 0);
         } while(numRead > 0);
+        TTSApplication.running.set(false);
     }
 
     void gracefulShutdown(Stage ttsStage) {
@@ -132,6 +137,7 @@ public class TTSUtils {
             throw new RuntimeException(ex);
         }
         ttsStage.close();
+        STOP = true;
     }
 
     public void setVolume(float value) {

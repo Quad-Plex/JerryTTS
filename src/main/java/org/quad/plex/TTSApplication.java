@@ -1,6 +1,9 @@
 package org.quad.plex;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -38,6 +41,8 @@ public class TTSApplication extends Application {
     private static TTSUtils ttsUtils;
     private static final URL infoIconUrl = TTSApplication.class.getResource("/info.png");
 
+    public static BooleanProperty running = new SimpleBooleanProperty();
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -50,8 +55,9 @@ public class TTSApplication extends Application {
         Label title = new javafx.scene.control.Label("Shitty Text to Speech Program go brrr");
         title.setFont(new Font("Verdana", 15));
         title.setStyle("-fx-font-weight: bold");
-        title.setAlignment(Pos.CENTER);
-        title.setPadding(new Insets(0,0,0,30));
+        HBox titleBox = new HBox();
+        titleBox.setAlignment(Pos.CENTER);
+        titleBox.getChildren().add(title);
 
         // Add a text input field
         TextArea textArea = new javafx.scene.control.TextArea("Text to speak here");
@@ -59,7 +65,7 @@ public class TTSApplication extends Application {
         textArea.setStyle("-fx-border-color: black;");
         HBox textBox = new HBox();
         textBox.setAlignment(Pos.CENTER);
-        textBox.setPadding(new Insets(20,20,20,20));
+        textBox.setPadding(new Insets(10,10,10,10));
         textBox.getChildren().add(textArea);
 
         int volumeSetting = 69;
@@ -95,21 +101,21 @@ public class TTSApplication extends Application {
 
         VBox volumeBox = new VBox();
         volumeBox.setSpacing(10);
-        volumeBox.setPadding(new Insets(0,10,0,10));
+        volumeBox.setPadding(new Insets(10,10,10,10));
         volumeBox.getChildren().add(volumeSlider);
         volumeBox.getChildren().add(volumeLabel);
 
         //create a panel for the speed slider and label
         VBox speedBox = new VBox();
         speedBox.setSpacing(10);
-        speedBox.setPadding(new Insets(0,10,0,10));
+        speedBox.setPadding(new Insets(10,10,10,10));
         speedBox.getChildren().add(speedSlider);
         speedBox.getChildren().add(speedLabel);
 
         //create a panel for the rate slider and label
         VBox pitchBox = new VBox();
         pitchBox.setSpacing(10);
-        pitchBox.setPadding(new Insets(0,10,0,10));
+        pitchBox.setPadding(new Insets(10,10,10,10));
         pitchBox.getChildren().add(pitchSlider);
         pitchBox.getChildren().add(pitchLabel);
 
@@ -137,13 +143,14 @@ public class TTSApplication extends Application {
         HBox buttonBox = new HBox();
         buttonBox.setSpacing(10);
         buttonBox.setPadding(new Insets(0,0,10,10));
+        buttonBox.setAlignment(Pos.CENTER);
         buttonBox.getChildren().add(speakButton);
         buttonBox.getChildren().add(exportButton);
         buttonBox.getChildren().add(languageComboBox);
         buttonBox.getChildren().add(voiceComboBox);
 
         BorderPane root = new BorderPane();
-        root.setTop(title);
+        root.setTop(titleBox);
         root.setCenter(textBox);
         root.setRight(sliderBox);
         root.setBottom(buttonBox);
@@ -176,10 +183,23 @@ public class TTSApplication extends Application {
             voiceComboBox.hide();
         });
 
+        running.addListener((observable, oldValue, newValue) -> {
+            if(newValue.equals(true))
+                Platform.runLater(() -> speakButton.setText("Running..."));
+            else
+                Platform.runLater(() -> speakButton.setText("Speak!"));
+        });
+
         // Add an action listener to the button
         speakButton.setOnAction(e -> {
-            String input = textArea.getText();
-            ttsUtils.speak(input);
+            if (!running.get()) {
+                speakButton.setText("Running...");
+                String input = textArea.getText();
+                ttsUtils.speak(input);
+            } else {
+                speakButton.setText("Speak!");
+                TTSUtils.STOP = true;
+            }
         });
 
         exportButton.setOnAction(e -> {

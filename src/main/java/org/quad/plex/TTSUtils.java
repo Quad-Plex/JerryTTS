@@ -27,11 +27,11 @@ public class TTSUtils {
         }
     }
 
-    private static Sonic SONIC;
-    private static final float SPEED = 1.0F;
-    private static final float PITCH = 1.0F;
+    static Sonic SONIC;
+    private static float SPEED = 1.0F;
+    private static float PITCH = 1.0F;
     private static final float RATE = 1.0f;
-    private static final float VOLUME = 0.69F;
+    private static float VOLUME = 0.69F;
     private static final boolean EMULATE_CHORD_PITCH = false;
     private static final int QUALITY = 0;
 
@@ -136,6 +136,7 @@ public class TTSUtils {
     }
 
     public void setVolume(float value) {
+        TTSUtils.VOLUME = value / 100;
         SONIC.setVolume(value / 100);
     }
 
@@ -143,6 +144,7 @@ public class TTSUtils {
         //we don't want the user to be able to set speed to 0, so we cap it to 1 behind the scenes
         float speed = (value == 0.0F) ? 1 : value;
         speed = speed / 100;
+        TTSUtils.SPEED = speed;
         SONIC.setSpeed(speed);
     }
 
@@ -150,6 +152,7 @@ public class TTSUtils {
         //we don't want the user to be able to set pitch to 0, so we cap it to 1 behind the scenes
         float pitch = (value == 0.0F) ? 1 : value;
         pitch = pitch / 100;
+        TTSUtils.PITCH = pitch;
         SONIC.setPitch(pitch);
     }
 

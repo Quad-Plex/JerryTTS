@@ -828,7 +828,7 @@ public class Sonic {
             } catch (Exception e) {
                 //Very dirty hack, this allows us to change the Rate downwards while the audio is playing
                 //Probably introduces some artifacts due to just returning a constant but eh, seems to work fine
-                return Short.MIN_VALUE;
+                return Short.MAX_VALUE;
             }
             /* printf("%u %f\n", i, weight); */
             value = in[inPos + i*numChannels]*weight;

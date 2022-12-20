@@ -82,7 +82,7 @@ public class TTSApplication extends Application {
         volumeSlider.setShowTickLabels(true);
 
         int speedSetting = 100;
-        Slider speedSlider = new Slider(1, 500, speedSetting);
+        Slider speedSlider = new Slider(0, 500, speedSetting);
         speedSlider.setOrientation(Orientation.VERTICAL);
         speedSlider.setPadding(new Insets(45,10,35,10));
         speedSlider.setScaleY(1.4);
@@ -95,7 +95,7 @@ public class TTSApplication extends Application {
         speedSlider.setShowTickLabels(true);
 
         int pitchSetting = 100;
-        Slider pitchSlider = new Slider(1, 500, pitchSetting);
+        Slider pitchSlider = new Slider(0, 500, pitchSetting);
         pitchSlider.setOrientation(Orientation.VERTICAL);
         pitchSlider.setPadding(new Insets(45,10,35,10));
         pitchSlider.setScaleY(1.4);

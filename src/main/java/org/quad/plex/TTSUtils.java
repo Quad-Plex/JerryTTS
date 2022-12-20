@@ -27,10 +27,15 @@ public class TTSUtils {
         }
     }
 
-    private static Sonic sonic;
-    private float volume = 0.69F;
-    private float pitch = 1.0F;
-    private float speed = 1.0F;
+    private static Sonic SONIC;
+    private static final float SPEED = 1.0F;
+    private static final float PITCH = 1.0F;
+    private static final float RATE = 1.0f;
+    private static final float VOLUME = 0.69F;
+    private static final boolean EMULATE_CHORD_PITCH = false;
+    private static final int QUALITY = 0;
+
+
 
     void speak(String input) {
         // Check if there is any input to speak, otherwise return
@@ -41,10 +46,6 @@ public class TTSUtils {
             //this causes MaryTTS to behave more predictably when speaking as it sees a finished sentence
             input = input + ".";
         }
-
-        float rate = 1.0f;
-        boolean emulateChordPitch = false;
-        int quality = 0;
 
         String finalInput = input;
         new Thread(() -> {
@@ -60,7 +61,7 @@ public class TTSUtils {
                 SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
                 line.open(speechStream.getFormat());
                 line.start();
-                runSonic(speechStream, line, speed, this.pitch, rate, volume, emulateChordPitch, quality,
+                runSonic(speechStream, line,
                         sampleRate, numChannels);
                 line.drain();
                 line.stop();
@@ -79,38 +80,32 @@ public class TTSUtils {
     private void runSonic(
             AudioInputStream audioStream,
             SourceDataLine line,
-            float speed,
-            float pitch,
-            float rate,
-            float volume,
-            boolean emulateChordPitch,
-            int quality,
             int sampleRate,
             int numChannels) throws IOException
     {
-        sonic = new Sonic(sampleRate, numChannels);
+        SONIC = new Sonic(sampleRate, numChannels);
         int bufferSize = line.getBufferSize();
         byte[] inBuffer = new byte[bufferSize];
         byte[] outBuffer = new byte[bufferSize];
         int numRead, numWritten;
 
-        sonic.setSpeed(speed);
-        sonic.setPitch(pitch);
-        sonic.setRate(rate);
-        sonic.setVolume(volume);
-        sonic.setChordPitch(emulateChordPitch);
-        sonic.setQuality(quality);
+        SONIC.setSpeed(TTSUtils.SPEED);
+        SONIC.setPitch(TTSUtils.PITCH);
+        SONIC.setRate(TTSUtils.RATE);
+        SONIC.setVolume(TTSUtils.VOLUME);
+        SONIC.setChordPitch(TTSUtils.EMULATE_CHORD_PITCH);
+        SONIC.setQuality(TTSUtils.QUALITY);
         TTSApplication.running.set(true);
         do {
             if (STOP || !TTSApplication.running.get()) { TTSApplication.running.set(false); STOP=false; return; }
             numRead = audioStream.read(inBuffer, 0, bufferSize);
             if(numRead <= 0) {
-                sonic.flushStream();
+                SONIC.flushStream();
             } else {
-                sonic.writeBytesToStream(inBuffer, numRead);
+                SONIC.writeBytesToStream(inBuffer, numRead);
             }
             do {
-                numWritten = sonic.readBytesFromStream(outBuffer, bufferSize);
+                numWritten = SONIC.readBytesFromStream(outBuffer, bufferSize);
                 if(numWritten > 0) {
                     line.write(outBuffer, 0, numWritten);
                 }
@@ -141,18 +136,21 @@ public class TTSUtils {
     }
 
     public void setVolume(float value) {
-        volume = value / 100;
-        sonic.setVolume(volume);
+        SONIC.setVolume(value / 100);
     }
 
     public void setSpeed(float value) {
-        speed = value / 100;
-        sonic.setSpeed(speed);
+        //we don't want the user to be able to set speed to 0, so we cap it to 1 behind the scenes
+        float speed = (value == 0.0F) ? 1 : value;
+        speed = speed / 100;
+        SONIC.setSpeed(speed);
     }
 
     public void setPitch(float value) {
-        pitch = value / 100;
-        sonic.setPitch(pitch);
+        //we don't want the user to be able to set pitch to 0, so we cap it to 1 behind the scenes
+        float pitch = (value == 0.0F) ? 1 : value;
+        pitch = pitch / 100;
+        SONIC.setPitch(pitch);
     }
 
     public static MaryInterface getMaryInstance() {

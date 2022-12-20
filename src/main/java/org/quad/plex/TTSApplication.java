@@ -34,13 +34,14 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
 import java.net.URL;
-import java.util.Locale;
+import java.util.*;
 
 public class TTSApplication extends Application {
     private MaryInterface mary;
 
     private static TTSUtils ttsUtils;
     private static final URL infoIconUrl = TTSApplication.class.getResource("/info.png");
+    private static final URL mainIconUrl = TTSApplication.class.getResource("/icon.png");
 
     public static BooleanProperty running = new SimpleBooleanProperty();
 
@@ -71,7 +72,7 @@ public class TTSApplication extends Application {
         textBox.getChildren().add(textArea);
 
         int volumeSetting = 69;
-        Slider volumeSlider = new Slider(0, 200, volumeSetting);
+        Slider volumeSlider = new Slider(0, 250, volumeSetting);
         volumeSlider.setOrientation(Orientation.VERTICAL);
         volumeSlider.setPadding(new Insets(40,10,30,0));
         volumeSlider.setScaleY(1.3);
@@ -187,8 +188,16 @@ public class TTSApplication extends Application {
         exportButtonBox.setPadding(new Insets(16,0,0,0));
 
         Locale[] languages = mary.getAvailableLocales().toArray(new Locale[0]);
-        ComboBox<Locale> languageComboBox = new ComboBox<>(FXCollections.observableArrayList(languages));
-        languageComboBox.setPrefSize(85, 32);
+        Arrays.sort(languages, Comparator.comparing(Locale::getDisplayName));
+
+        // create a map that maps the display names to the Locale objects
+        Map<String, Locale> displayNameToLocaleMap = new HashMap<>();
+        for (Locale locale : languages) {
+            displayNameToLocaleMap.put(locale.getDisplayName(), locale);
+        }
+
+        ComboBox<String> languageComboBox = new ComboBox<>(FXCollections.observableArrayList(displayNameToLocaleMap.keySet()));
+        languageComboBox.setPrefSize(125, 32);
         languageComboBox.setStyle("-fx-font-family: Verdana; -fx-font-size: 12;");
         languageComboBox.getSelectionModel().select(1);
         Label languageLabel = new Label();
@@ -200,7 +209,7 @@ public class TTSApplication extends Application {
 
         String[] voices = mary.getAvailableVoices(mary.getLocale()).toArray(new String[0]);
         ComboBox<String> voiceComboBox = new ComboBox<>(FXCollections.observableArrayList(voices));
-        voiceComboBox.setPrefSize(130, 32);
+        voiceComboBox.setPrefSize(135, 32);
         voiceComboBox.setStyle("-fx-font-family: Verdana; -fx-font-size: 12;");
         voiceComboBox.getSelectionModel().select(0);
         Label voiceLabel = new Label();
@@ -210,11 +219,17 @@ public class TTSApplication extends Application {
         VBox voiceBox = new VBox();
         voiceBox.getChildren().addAll(voiceLabel, voiceComboBox);
 
+        CheckBox chordCheckBox = new CheckBox("Chord Pitch");
+        chordCheckBox.setWrapText(true);
+        chordCheckBox.setPadding(new Insets(15,0,0,0));
+        // Add an action listener to the checkbox
+        chordCheckBox.setOnAction(event -> ttsUtils.setChordPitchEnabled(chordCheckBox.isSelected()));
+
         HBox buttonBox = new HBox();
         buttonBox.setSpacing(10);
         buttonBox.setPadding(new Insets(0,0,10,10));
         buttonBox.setAlignment(Pos.CENTER);
-        buttonBox.getChildren().addAll(speakButtonBox, exportButtonBox, languageBox, voiceBox);
+        buttonBox.getChildren().addAll(speakButtonBox, exportButtonBox, languageBox, voiceBox, chordCheckBox);
 
         BorderPane root = new BorderPane();
         root.setTop(titleBox);
@@ -224,8 +239,10 @@ public class TTSApplication extends Application {
 
         Scene scene = new Scene(root);
         ttsStage.setTitle("Shitty AI-Generated TTS v0.420.69");
+        assert mainIconUrl != null;
+        ttsStage.getIcons().add(new Image(mainIconUrl.toString()));
         ttsStage.setHeight(420);
-        ttsStage.setWidth(500);
+        ttsStage.setWidth(530);
         ttsStage.setResizable(false);
         ttsStage.centerOnScreen();
         ttsStage.setScene(scene);
@@ -238,7 +255,9 @@ public class TTSApplication extends Application {
         pitchSlider.valueProperty().addListener((observable, oldValue, newValue) -> ttsUtils.setPitch(newValue.intValue()));
 
         languageComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-            mary.setLocale(newValue);
+            // get the Locale object for the selected display name
+            Locale selectedLocale = displayNameToLocaleMap.get(newValue);
+            mary.setLocale(selectedLocale);
             updateVoiceSelection(voiceComboBox);
             languageComboBox.hide();
         });
@@ -302,6 +321,10 @@ public class TTSApplication extends Application {
 
     private void exportAudioToClipboard(String input) {
         try {
+            if (input.isEmpty()) {
+                createPopupWindow(false);
+                return;
+            }
             // Generate the audio data for the given text
             AudioInputStream audio = mary.generateAudio(input);
 
@@ -315,13 +338,13 @@ public class TTSApplication extends Application {
             clipboard.setContents(transferable, null);
 
             //Show a toast message
-            createPopupWindow();
+            createPopupWindow(true);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
 
-    private void createPopupWindow() {
+    private void createPopupWindow(boolean success) {
         // Create a new Stage for the popup window
         Stage popupWindow = new Stage();
         popupWindow.setAlwaysOnTop(true);
@@ -335,8 +358,13 @@ public class TTSApplication extends Application {
         popupWindow.setWidth(230);
         popupWindow.setHeight(130);
 
+        Label messageLabel;
         // Create the message label
-        Label messageLabel = new Label("Successfully copied speech to clipboard!");
+        if (success) {
+            messageLabel = new Label("Successfully copied speech to clipboard!");
+        } else {
+            messageLabel = new Label("Enter some text to be synthesized first!");
+        }
         messageLabel.setMaxWidth(130);
         messageLabel.setWrapText(true);
         messageLabel.setPadding(new Insets(10, 10, 10, 10)); // Add some padding around the label

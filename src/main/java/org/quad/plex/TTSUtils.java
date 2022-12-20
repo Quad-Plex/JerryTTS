@@ -32,7 +32,7 @@ public class TTSUtils {
     private static float PITCH = 1.0F;
     private static final float RATE = 1.0f;
     private static float VOLUME = 0.69F;
-    private static final boolean EMULATE_CHORD_PITCH = false;
+    private static boolean EMULATE_CHORD_PITCH = false;
     private static final int QUALITY = 0;
 
 
@@ -154,6 +154,11 @@ public class TTSUtils {
         pitch = pitch / 100;
         TTSUtils.PITCH = pitch;
         SONIC.setPitch(pitch);
+    }
+
+    public void setChordPitchEnabled(boolean enabled) {
+        SONIC.setChordPitch(enabled);
+        TTSUtils.EMULATE_CHORD_PITCH = enabled;
     }
 
     public static MaryInterface getMaryInstance() {

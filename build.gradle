@@ -1,8 +1,43 @@
+//file:noinspection GroovyMissingReturnStatement
 plugins {
     id 'java'
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.13'
 }
+
+def urls = []
+file('mary-voice-urls').eachLine { line ->
+    if (!line.startsWith('//')) {
+        urls.add line
+    }
+}
+
+tasks.register('downloadAllVoices') {
+    doLast {
+        def libDir = file('lib')
+        if (!libDir.exists()) {
+            libDir.mkdirs()
+        }
+        if (libDir.list().length == 0) {
+            urls.each { url ->
+                // Download the zip file
+                def zipFile = new File(libDir, "${url.substring(url.lastIndexOf('/') + 1)}")
+                new URL(url as String).withInputStream{ i -> zipFile.withOutputStream{ it << i }}
+
+                // Unzip the file
+                ant.unzip(src: zipFile, dest: libDir.getParentFile()) {
+                    patternset( ) {
+                        include( name: 'lib/' )
+                    }
+                }
+                zipFile.delete()
+            }
+        }
+    }
+}
+
+build.dependsOn downloadAllVoices
+
 
 group 'org.quad.plex'
 version '1.0-SNAPSHOT'
@@ -28,12 +63,59 @@ dependencies {
         exclude group: 'com.twmacinta', module: 'fast-md5'
         exclude group: 'gov.nist.math', module: 'Jampack'
     }
+
     implementation group: 'de.dfki.mary', name: 'marytts-lang-de', version: '5.2.1', {
         exclude group: 'com.twmacinta', module: 'fast-md5'
         exclude group: 'gov.nist.math', module: 'Jampack'
     }
 
-    implementation fileTree(dir: 'ext_libs', includes: ['*.jar'])
+    implementation group: 'de.dfki.mary', name: 'marytts-lang-fr', version: '5.2.1', {
+        exclude group: 'com.twmacinta', module: 'fast-md5'
+        exclude group: 'gov.nist.math', module: 'Jampack'
+    }
+
+    implementation group: 'de.dfki.mary', name: 'marytts-lang-it', version: '5.2.1', {
+        exclude group: 'com.twmacinta', module: 'fast-md5'
+        exclude group: 'gov.nist.math', module: 'Jampack'
+    }
+
+    implementation group: 'de.dfki.mary', name: 'marytts-lang-ru', version: '5.2.1', {
+        exclude group: 'com.twmacinta', module: 'fast-md5'
+        exclude group: 'gov.nist.math', module: 'Jampack'
+    }
+
+//throws groovy.lang.MissingMethodException and can't be instantiated
+//    implementation group: 'de.dfki.mary', name: 'marytts-lang-lb', version: '5.2.1', {
+//        exclude group: 'com.twmacinta', module: 'fast-md5'
+//        exclude group: 'gov.nist.math', module: 'Jampack'
+//    }
+
+    implementation group: 'de.dfki.mary', name: 'marytts-lang-sv', version: '5.2.1', {
+        exclude group: 'com.twmacinta', module: 'fast-md5'
+        exclude group: 'gov.nist.math', module: 'Jampack'
+    }
+
+    implementation group: 'de.dfki.mary', name: 'marytts-lang-te', version: '5.2.1', {
+        exclude group: 'com.twmacinta', module: 'fast-md5'
+        exclude group: 'gov.nist.math', module: 'Jampack'
+    }
+
+    implementation group: 'de.dfki.mary', name: 'marytts-lang-tr', version: '5.2.1', {
+        exclude group: 'com.twmacinta', module: 'fast-md5'
+        exclude group: 'gov.nist.math', module: 'Jampack'
+    }
+
+    implementation group: 'de.dfki.mary', name: 'marytts-languages', version: '5.2.1', {
+        exclude group: 'com.twmacinta', module: 'fast-md5'
+        exclude group: 'gov.nist.math', module: 'Jampack'
+    }
+
+    implementation group: 'de.dfki.mary', name: 'marytts-signalproc', version: '5.2.1', {
+        exclude group: 'com.twmacinta', module: 'fast-md5'
+        exclude group: 'gov.nist.math', module: 'Jampack'
+    }
+
+    implementation fileTree(dir: 'lib', includes: ['*.jar'])
 }
 
 test {
@@ -52,5 +134,4 @@ sourceSets {
         }
     }
 }
-
 

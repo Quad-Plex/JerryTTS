@@ -260,11 +260,9 @@ public class TTSApplication extends Application {
         // Add an action listener to the button
         speakButton.setOnAction(e -> {
             if (!running.get()) {
-                speakButton.setText("Running...");
                 String input = textArea.getText();
                 ttsUtils.speak(input);
             } else {
-                speakButton.setText("Speak!");
                 TTSUtils.STOP = true;
                 //calling speak again here is just a workaround. Sometimes the audio playback gets stuck when using the
                 //sliders while audio is playing. Just setting the 'STOP' variable won't stop the playback in this case,
@@ -296,8 +294,8 @@ public class TTSApplication extends Application {
         ttsUtils.speak("Shitty T T S version 0.4 20.69 initialized.");
 
         //shitty workaround; the comboboxes don't close automatically the first time they're used
-        //to select an item. Closing them once clears this behavior, for some reason,
-        //so we just open and close it once here, which can't be seen when the program opens
+        //to select an item. Closing one of them once clears this behavior, for some reason,
+        //so we just open and close one here, which can't even be seen when the program opens
         languageComboBox.show();
         languageComboBox.hide();
     }

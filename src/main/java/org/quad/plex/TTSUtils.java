@@ -73,6 +73,7 @@ public class TTSUtils {
             } catch (Exception e) {
                 System.out.println("General exception occured while speaking: " + e.getMessage());
             }
+            TTSApplication.running.set(false);
         }).start();
     }
 
@@ -111,7 +112,6 @@ public class TTSUtils {
                 }
             } while(numWritten > 0);
         } while(numRead > 0);
-        TTSApplication.running.set(false);
     }
 
     void gracefulShutdown(Stage ttsStage) {

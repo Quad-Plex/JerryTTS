@@ -71,6 +71,10 @@ public class TTSApplication extends Application {
         int volumeSetting = 69;
         Slider volumeSlider = new Slider(0, 200, volumeSetting);
         volumeSlider.setOrientation(Orientation.VERTICAL);
+        volumeSlider.setPadding(new Insets(45,10,35,10));
+        volumeSlider.setScaleY(1.4);
+        volumeSlider.setScaleX(1.4);
+        volumeSlider.setSnapToTicks(true);
         volumeSlider.setPrefHeight(500);
         volumeSlider.setMajorTickUnit(25);
         volumeSlider.setMinorTickCount(1);
@@ -80,20 +84,28 @@ public class TTSApplication extends Application {
         int speedSetting = 100;
         Slider speedSlider = new Slider(1, 500, speedSetting);
         speedSlider.setOrientation(Orientation.VERTICAL);
+        speedSlider.setPadding(new Insets(45,10,35,10));
+        speedSlider.setScaleY(1.4);
+        speedSlider.setScaleX(1.4);
+        speedSlider.setSnapToTicks(true);
         speedSlider.setPrefHeight(500);
-        volumeSlider.setMajorTickUnit(50);
-        volumeSlider.setMinorTickCount(10);
-        volumeSlider.setShowTickMarks(true);
-        volumeSlider.setShowTickLabels(true);
+        speedSlider.setMajorTickUnit(50);
+        speedSlider.setMinorTickCount(10);
+        speedSlider.setShowTickMarks(true);
+        speedSlider.setShowTickLabels(true);
 
         int pitchSetting = 100;
         Slider pitchSlider = new Slider(1, 500, pitchSetting);
         pitchSlider.setOrientation(Orientation.VERTICAL);
+        pitchSlider.setPadding(new Insets(45,10,35,10));
+        pitchSlider.setScaleY(1.4);
+        pitchSlider.setScaleX(1.4);
+        pitchSlider.setSnapToTicks(true);
         pitchSlider.setPrefHeight(500);
-        volumeSlider.setMajorTickUnit(50);
-        volumeSlider.setMinorTickCount(10);
-        volumeSlider.setShowTickMarks(true);
-        volumeSlider.setShowTickLabels(true);
+        pitchSlider.setMajorTickUnit(50);
+        pitchSlider.setMinorTickCount(10);
+        pitchSlider.setShowTickMarks(true);
+        pitchSlider.setShowTickLabels(true);
 
         Label volumeLabel = new javafx.scene.control.Label("Volume");
         Label speedLabel = new javafx.scene.control.Label("Speed");
@@ -101,21 +113,21 @@ public class TTSApplication extends Application {
 
         VBox volumeBox = new VBox();
         volumeBox.setSpacing(10);
-        volumeBox.setPadding(new Insets(10,10,10,10));
+        volumeBox.setPadding(new Insets(0,0,10,0));
         volumeBox.getChildren().add(volumeSlider);
         volumeBox.getChildren().add(volumeLabel);
 
         //create a panel for the speed slider and label
         VBox speedBox = new VBox();
         speedBox.setSpacing(10);
-        speedBox.setPadding(new Insets(10,10,10,10));
+        speedBox.setPadding(new Insets(0,0,10,0));
         speedBox.getChildren().add(speedSlider);
         speedBox.getChildren().add(speedLabel);
 
         //create a panel for the rate slider and label
         VBox pitchBox = new VBox();
         pitchBox.setSpacing(10);
-        pitchBox.setPadding(new Insets(10,10,10,10));
+        pitchBox.setPadding(new Insets(0,0,10,0));
         pitchBox.getChildren().add(pitchSlider);
         pitchBox.getChildren().add(pitchLabel);
 
@@ -199,6 +211,11 @@ public class TTSApplication extends Application {
             } else {
                 speakButton.setText("Speak!");
                 TTSUtils.STOP = true;
+                //calling speak again here is just a workaround. Sometimes the audio playback gets stuck when using the
+                //sliders while audio is playing. Just setting the 'STOP' variable won't stop the playback in this case,
+                //as something in the Sonic thread gets stuck. Calling speak again wakes this tread up, so that it can
+                //recognize that the STOP value is set, and terminate the Stream normally
+                ttsUtils.speak("stopping");
             }
         });
 

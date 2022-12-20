@@ -63,7 +63,7 @@ public class TTSApplication extends Application {
         // Add a text input field
         TextArea textArea = new javafx.scene.control.TextArea("Text to speak here");
         textArea.setWrapText(true);
-        textArea.setFont(new Font("Verdana", 12));
+        textArea.setFont(new Font("Verdana", 13));
         textArea.setStyle("-fx-border-color: black;");
         HBox textBox = new HBox();
         textBox.setAlignment(Pos.CENTER);
@@ -173,29 +173,48 @@ public class TTSApplication extends Application {
         sliderBox.getChildren().add(pitchBox);
 
         Button speakButton = new Button("Speak!");
-        speakButton.setPrefSize(75, 30);
+        speakButton.setPrefSize(85, 32);
+        speakButton.setFont(new Font("Verdana", 12));
+        VBox speakButtonBox = new VBox();
+        speakButtonBox.getChildren().add(speakButton);
+        speakButtonBox.setPadding(new Insets(16,0,0,0));
 
         Button exportButton = new Button("Export");
-        exportButton.setPrefSize(75, 30);
+        exportButton.setPrefSize(85, 32);
+        exportButton.setFont(new Font("Verdana", 12));
+        VBox exportButtonBox = new VBox();
+        exportButtonBox.getChildren().add(exportButton);
+        exportButtonBox.setPadding(new Insets(16,0,0,0));
 
         Locale[] languages = mary.getAvailableLocales().toArray(new Locale[0]);
         ComboBox<Locale> languageComboBox = new ComboBox<>(FXCollections.observableArrayList(languages));
-        languageComboBox.setPrefSize(80, 30);
+        languageComboBox.setPrefSize(85, 32);
+        languageComboBox.setStyle("-fx-font-family: Verdana; -fx-font-size: 12;");
         languageComboBox.getSelectionModel().select(1);
+        Label languageLabel = new Label();
+        languageLabel.setText("Language:");
+        languageLabel.setFont(new Font("Verdana", 10));
+        languageLabel.setPadding(new Insets(0,0,4,0));
+        VBox languageBox = new VBox();
+        languageBox.getChildren().addAll(languageLabel, languageComboBox);
 
         String[] voices = mary.getAvailableVoices(mary.getLocale()).toArray(new String[0]);
         ComboBox<String> voiceComboBox = new ComboBox<>(FXCollections.observableArrayList(voices));
-        voiceComboBox.setPrefSize(120, 30);
+        voiceComboBox.setPrefSize(130, 32);
+        voiceComboBox.setStyle("-fx-font-family: Verdana; -fx-font-size: 12;");
         voiceComboBox.getSelectionModel().select(0);
+        Label voiceLabel = new Label();
+        voiceLabel.setText("Voice:");
+        voiceLabel.setFont(new Font("Verdana", 10));
+        voiceLabel.setPadding(new Insets(0,0,4,0));
+        VBox voiceBox = new VBox();
+        voiceBox.getChildren().addAll(voiceLabel, voiceComboBox);
 
         HBox buttonBox = new HBox();
         buttonBox.setSpacing(10);
         buttonBox.setPadding(new Insets(0,0,10,10));
         buttonBox.setAlignment(Pos.CENTER);
-        buttonBox.getChildren().add(speakButton);
-        buttonBox.getChildren().add(exportButton);
-        buttonBox.getChildren().add(languageComboBox);
-        buttonBox.getChildren().add(voiceComboBox);
+        buttonBox.getChildren().addAll(speakButtonBox, exportButtonBox, languageBox, voiceBox);
 
         BorderPane root = new BorderPane();
         root.setTop(titleBox);

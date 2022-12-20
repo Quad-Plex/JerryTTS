@@ -276,24 +276,7 @@ public class TTSApplication extends Application {
 
         exportButton.setOnAction(e -> {
             String input = textArea.getText();
-            try {
-                // Generate the audio data for the given text
-                AudioInputStream audio = mary.generateAudio(input);
-
-                // Write the audio data to a file in the WAV format
-                File wavFile = new File("temp\\export.wav");
-                AudioSystem.write(audio, AudioFileFormat.Type.WAVE, wavFile);
-
-                // Get the system clipboard and set the contents to the file that we just created
-                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                Transferable transferable = new FileTransferable(wavFile);
-                clipboard.setContents(transferable, null);
-
-                //Show a toast message
-                createPopupWindow();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            exportAudioToClipboard(input);
         });
 
         textArea.setOnKeyPressed(event -> {
@@ -311,6 +294,33 @@ public class TTSApplication extends Application {
         });
 
         ttsUtils.speak("Shitty T T S version 0.4 20.69 initialized.");
+
+        //shitty workaround; the comboboxes don't close automatically the first time they're used
+        //to select an item. Closing them once clears this behavior, for some reason,
+        //so we just open and close it once here, which can't be seen when the program opens
+        languageComboBox.show();
+        languageComboBox.hide();
+    }
+
+    private void exportAudioToClipboard(String input) {
+        try {
+            // Generate the audio data for the given text
+            AudioInputStream audio = mary.generateAudio(input);
+
+            // Write the audio data to a file in the WAV format
+            File wavFile = new File("temp\\export.wav");
+            AudioSystem.write(audio, AudioFileFormat.Type.WAVE, wavFile);
+
+            // Get the system clipboard and set the contents to the file that we just created
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            Transferable transferable = new FileTransferable(wavFile);
+            clipboard.setContents(transferable, null);
+
+            //Show a toast message
+            createPopupWindow();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     private void createPopupWindow() {

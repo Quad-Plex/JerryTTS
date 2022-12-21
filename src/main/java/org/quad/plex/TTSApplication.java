@@ -26,23 +26,23 @@ import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import marytts.MaryInterface;
 
-import javax.sound.sampled.AudioFileFormat;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.URL;
 import java.util.*;
+
+import static org.quad.plex.TTSUtils.runSonic;
 
 public class TTSApplication extends Application {
     private MaryInterface mary;
     private static final URL infoIconUrl = TTSApplication.class.getResource("/info.png");
     private static final URL mainIconUrl = TTSApplication.class.getResource("/icon.png");
-
     public static BooleanProperty running = new SimpleBooleanProperty();
+    public static BooleanProperty error = new SimpleBooleanProperty();
 
     public static void main(String[] args) {
         launch(args);
@@ -279,10 +279,33 @@ public class TTSApplication extends Application {
         });
 
         running.addListener((observable, oldValue, newValue) -> {
-            if(newValue.equals(true))
+            if(newValue.equals(true)) {
                 Platform.runLater(() -> speakButton.setText("Running..."));
-            else
+                Platform.runLater(() -> exportButton.setDisable(true));
+            } else {
                 Platform.runLater(() -> speakButton.setText("Speak!"));
+                Platform.runLater(() -> exportButton.setDisable(false));
+            }
+        });
+
+        error.addListener((observable, oldValue, newValue) -> {
+            if(newValue.equals(true)) {
+                Platform.runLater(() -> {
+                    speakButton.setText("ERROR!");
+                    speakButton.setStyle("-fx-text-fill: red; -fx-font-weight: bold; -fx-font-size: 17px;");
+                });
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                error.set(false);
+                Platform.runLater(() -> {
+                    speakButton.setText("Speak!");
+                    speakButton.setStyle("-fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 14px;");
+
+                });
+            }
         });
 
         // Add an action listener to the button
@@ -305,10 +328,15 @@ public class TTSApplication extends Application {
         });
 
         textArea.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ENTER && event.isControlDown() && !event.isShiftDown()) {
+            if (event.getCode() == KeyCode.ENTER && !event.isShiftDown()) {
+                String currentText = textArea.getText();
+                textArea.setText(currentText.substring(0, currentText.length() - 1));
+                textArea.positionCaret(textArea.getText().length());
                 speakText(textArea);
             } else if (event.getCode() == KeyCode.ESCAPE) {
                 TTSUtils.gracefulShutdown(ttsStage);
+            } else if (event.isShiftDown() && event.getCode() == KeyCode.ENTER) {
+                textArea.appendText("\n");
             }
         });
 
@@ -334,13 +362,9 @@ public class TTSApplication extends Application {
 
     private void exportAudioToClipboard(String input) {
         try {
-            if (input.isEmpty()) {
-                createPopupWindow(false);
-                return;
-            }
-            if(Objects.equals(mary.getLocale().getCountry(), Locale.forLanguageTag("ru").getCountry())){
-                input = CyrillicLatinConverter.latinToCyrillic(input);
-            }
+            input = TTSUtils.sanitizeInput(input);
+            if (input == null) { createPopupWindow(false); return;}
+
             // Generate the audio data for the given text
             AudioInputStream audio = mary.generateAudio(input);
 
@@ -359,9 +383,30 @@ public class TTSApplication extends Application {
                 audio = AudioSystem.getAudioInputStream(targetFormat, audio);
             }
 
+            byte[] audioData = TTSUtils.convertStreamToByteArray(audio);
+
+            audioData = TTSUtils.trimAudioData(audioData);
+
+            if (TTSUtils.REVERSE_AUDIO) {
+                TTSUtils.reverseAudioData(audioData);
+            }
+
+            AudioInputStream audioStream = new AudioInputStream(new ByteArrayInputStream(audioData),targetFormat, audioData.length / targetFormat.getFrameSize());
+
+            TTSUtils.setStop(false);
+            TTSApplication.running.set(true);
+            byte[] exportData = runSonic(audioStream, null,
+                    (int) targetFormat.getSampleRate(),
+                    targetFormat.getChannels(),
+                    1,
+                    true);
+            TTSApplication.running.set(false);
+
+            AudioInputStream exportStream = new AudioInputStream(new ByteArrayInputStream(exportData),targetFormat, exportData.length / targetFormat.getFrameSize());
+
             // Write the audio data to a file in the WAV format
             File wavFile = new File("temp\\export.wav");
-            AudioSystem.write(audio, AudioFileFormat.Type.WAVE, wavFile);
+            AudioSystem.write(exportStream, AudioFileFormat.Type.WAVE, wavFile);
 
             // Get the system clipboard and set the contents to the file that we just created
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -387,7 +432,7 @@ public class TTSApplication extends Application {
 
         // Set the window's size
         popupWindow.setWidth(230);
-        popupWindow.setHeight(130);
+        popupWindow.setHeight(140);
 
         Label messageLabel;
         // Create the message label
@@ -415,12 +460,12 @@ public class TTSApplication extends Application {
         VBox closeButtonBox = new VBox();
         closeButtonBox.getChildren().addAll(messageLabel, closeButton);
         closeButtonBox.setAlignment(Pos.BOTTOM_RIGHT);
-        closeButtonBox.setPadding(new Insets(0,30,10,0));
+        closeButtonBox.setPadding(new Insets(10,40,10,0));
 
         HBox messageBox = new HBox();
         messageBox.getChildren().addAll(infoIcon, closeButtonBox);
         messageBox.setAlignment(Pos.CENTER); // Center the layout
-        messageBox.setPadding(new Insets(10, 10, 10, 10)); // Add some padding around the layout
+        messageBox.setPadding(new Insets(10, 10, 30, 10)); // Add some padding around the layout
 
         BorderPane popupRoot = new BorderPane();
         popupRoot.setLeft(messageBox);

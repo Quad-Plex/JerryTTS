@@ -20,7 +20,7 @@ import static java.lang.Thread.sleep;
 
 public class TTSUtils {
 
-    private static boolean REVERSE_AUDIO = false;
+    static boolean REVERSE_AUDIO = false;
     public static boolean STOP = false;
     private static final String punctuation = ".,:-!?";
     private static final MaryInterface mary;
@@ -40,25 +40,16 @@ public class TTSUtils {
     private static float VOLUME = 0.69F;
     private static boolean EMULATE_CHORD_PITCH = false;
     private static boolean PLAY_CONTINUOUSLY = false;
-    private static final int QUALITY = 0;
-
-
 
     static void speak(String input) {
         // Check if there is any input to speak, otherwise return
-        if (input.isEmpty()) {
-            return;
-        } else if (!punctuation.contains(input.subSequence(input.length()-1, input.length()))) {
-            //If there is input, check if it ends in punctuation, if it doesn't, add a period
-            //this causes MaryTTS to behave more predictably when speaking as it sees a finished sentence
-            input = input + ".";
-        }
-        if(Objects.equals(mary.getLocale().getDisplayName(), Locale.forLanguageTag("ru").getDisplayName())){
-            input = CyrillicLatinConverter.latinToCyrillic(input);
-        }
+        input = sanitizeInput(input);
+        if (input == null) return;
 
         String finalInput = input;
         new Thread(() -> {
+            TTSApplication.running.set(true);
+            SourceDataLine line = null;
             try {
                 // Generate audio data for the input text
                 AudioInputStream speechStream = mary.generateAudio(finalInput);
@@ -78,86 +69,130 @@ public class TTSUtils {
                     speechStream = AudioSystem.getAudioInputStream(targetFormat, speechStream);
                 }
 
-                byte[] audioData;
-                try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                    byte[] buffer = new byte[1024];
-                    int read;
-                    while ((read = speechStream.read(buffer, 0, buffer.length)) != -1) {
-                        baos.write(buffer, 0, read);
-                    }
-                    audioData = baos.toByteArray();
-                }
-                // Close the stream
-                speechStream.close();
+                byte[] audioData = convertStreamToByteArray(speechStream);
 
                 if (REVERSE_AUDIO) {
-                    ArrayUtils.reverse(audioData);
+                    reverseAudioData(audioData);
                 }
 
-                // Trim all leading and trailing silence
-                // This allows Repeating speech to repeat without pause
-                // We detect the first 12 samples in the start and end of the byte array that are >125 in value
-                // We use these cutoffs as the new start and end points. The audio at these extreme ends in the stream
-                // isn't audible, so it just results in a more concise audiostream containing our speech
-                int start = 0;
-                int end = audioData.length - 1;
-                int numHitsStart = 0;
-                int numHitsEnd = 0;
-                int numCutoff = 1;
-                if (PLAY_CONTINUOUSLY) {
-                    numCutoff = 5;
-                }
-                while (start < audioData.length && numHitsStart < numCutoff) {
-                    if (audioData[start] > 125) {
-                        numHitsStart++;
-                    }
-                    start++;
-                }
-                while (end >= 0 && numHitsEnd < numCutoff * 2) {
-                    if (audioData[end] > 125) {
-                        numHitsEnd++;
-                    }
-                    end--;
-                }
-                audioData = Arrays.copyOfRange(audioData, start - 1, end + 1);
+                audioData = trimAudioData(audioData);
 
                 do {
-                    AudioInputStream loopStream = new AudioInputStream(new ByteArrayInputStream(audioData),targetFormat, audioData.length / targetFormat.getFrameSize());
+                    AudioInputStream loopStream = new AudioInputStream(new ByteArrayInputStream(audioData), targetFormat, audioData.length / targetFormat.getFrameSize());
                     SourceDataLine.Info info = new DataLine.Info(SourceDataLine.class, targetFormat);
-                    SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
+                    line = (SourceDataLine) AudioSystem.getLine(info);
 
                     line.open(targetFormat);
                     line.start();
 
                     runSonic(loopStream, line,
-                            (int) targetFormat.getSampleRate(), targetFormat.getChannels());
+                            (int) targetFormat.getSampleRate(),
+                            targetFormat.getChannels(),
+                            0,
+                            false);
 
                     line.drain();
                     line.stop();
-                } while(PLAY_CONTINUOUSLY && TTSApplication.running.get());
+                } while (PLAY_CONTINUOUSLY && TTSApplication.running.get());
             } catch (SynthesisException ex) {
                 System.err.println("Error speaking text: " + ex.getMessage());
                 ex.printStackTrace();
             } catch (LineUnavailableException | IOException e) {
                 throw new RuntimeException(e);
             } catch (Exception e) {
-                System.out.println("General exception occured while speaking: " + e.getMessage());
+                System.out.println("General exception occurred while speaking: " + e.getMessage());
+                TTSApplication.error.set(true);
+            } finally {
+                TTSApplication.running.set(false);
+                assert line != null;
+                line.drain();
+                line.stop();
             }
-            TTSApplication.running.set(false);
         }).start();
     }
 
+    static void reverseAudioData(byte[] audioData) {
+        //First flip around all the individual frames in the byte stream
+        //then read the array from the back, which leaves the frames themselves intact
+        for (int i = 0; i < audioData.length; i += 2) {
+            byte temp = audioData[i];
+            audioData[i] = audioData[i + 1];
+            audioData[i + 1] = temp;
+        }
+        ArrayUtils.reverse(audioData);
+    }
+
+    static byte[] convertStreamToByteArray(AudioInputStream speechStream) throws IOException {
+        byte[] audioData;
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = speechStream.read(buffer, 0, buffer.length)) != -1) {
+                baos.write(buffer, 0, read);
+            }
+            audioData = baos.toByteArray();
+        }
+        // Close the stream
+        speechStream.close();
+        return audioData;
+    }
+
+    static String sanitizeInput(String input) {
+        if (input.isEmpty()) {
+            return null;
+        } else if (!punctuation.contains(input.subSequence(input.length()-1, input.length()))) {
+            //If there is input, check if it ends in punctuation, if it doesn't, add a period
+            //this causes MaryTTS to behave more predictably when speaking as it sees a finished sentence
+            input = input + ".";
+        }
+        if(Objects.equals(mary.getLocale().getDisplayName(), Locale.forLanguageTag("ru").getDisplayName())){
+            input = CyrillicLatinConverter.latinToCyrillic(input);
+        }
+        return input;
+    }
+
+    static byte[] trimAudioData(byte[] audioData) {
+        // Trim all leading and trailing silence
+        // This allows Repeating speech to repeat without pause
+        // We detect the first 12 samples in the start and end of the byte array that are >125 in value
+        // We use these cutoffs as the new start and end points. The audio at these extreme ends in the stream
+        // isn't audible, so it just results in a more concise audiostream containing our speech
+        int start = 0;
+        int end = audioData.length - 1;
+        int numHitsStart = 0;
+        int numHitsEnd = 0;
+        int numCutoff = 1;
+        if (PLAY_CONTINUOUSLY) {
+            numCutoff = 5;
+        }
+        while (start < audioData.length && numHitsStart < numCutoff) {
+            if (audioData[start] > 125) {
+                numHitsStart++;
+            }
+            start++;
+        }
+        while (end >= 0 && numHitsEnd < numCutoff * 2) {
+            if (audioData[end] > 125) {
+                numHitsEnd++;
+            }
+            end--;
+        }
+        return Arrays.copyOfRange(audioData, start - 1, end + 1);
+    }
+
     // Run sonic.
-    private static void runSonic(
+    static byte[] runSonic(
             AudioInputStream audioStream,
             SourceDataLine line,
             int sampleRate,
-            int numChannels) throws IOException
+            int numChannels,
+            int quality,
+            boolean export) throws IOException
     {
         SONIC = new Sonic(sampleRate, numChannels);
-        int bufferSize = line.getBufferSize();
-        byte[] inBuffer = new byte[bufferSize];
-        byte[] outBuffer = new byte[bufferSize];
+        byte[] inBuffer = new byte[sampleRate];
+        byte[] outBuffer = new byte[sampleRate];
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int numRead, numWritten;
 
         SONIC.setSpeed(TTSUtils.SPEED);
@@ -165,23 +200,32 @@ public class TTSUtils {
         SONIC.setRate(TTSUtils.RATE);
         SONIC.setVolume(TTSUtils.VOLUME);
         SONIC.setChordPitch(TTSUtils.EMULATE_CHORD_PITCH);
-        SONIC.setQuality(TTSUtils.QUALITY);
-        TTSApplication.running.set(true);
+        SONIC.setQuality(quality);
         do {
-            if (STOP || !TTSApplication.running.get()) { TTSApplication.running.set(false); return; }
-            numRead = audioStream.read(inBuffer, 0, bufferSize);
+            if (STOP || !TTSApplication.running.get()) {
+                STOP = false;
+                TTSApplication.running.set(false);
+                break;
+            }
+            numRead = audioStream.read(inBuffer, 0, sampleRate);
             if(numRead <= 0) {
                 SONIC.flushStream();
             } else {
                 SONIC.writeBytesToStream(inBuffer, numRead);
             }
             do {
-                numWritten = SONIC.readBytesFromStream(outBuffer, bufferSize);
+                numWritten = SONIC.readBytesFromStream(outBuffer, sampleRate);
                 if(numWritten > 0) {
-                    line.write(outBuffer, 0, numWritten);
+                    if (!export) {
+                        line.write(outBuffer, 0, numWritten);
+                    } else {
+                        // Append the data read from the stream to the 'exportData' array
+                        baos.write(outBuffer, 0, numWritten);
+                    }
                 }
             } while(numWritten > 0);
         } while(numRead > 0);
+        return baos.toByteArray();
     }
 
     static void gracefulShutdown(Stage ttsStage) {
@@ -199,12 +243,11 @@ public class TTSUtils {
         mary.setLocale(Locale.US);
         speak("Goodbye!");
         try {
-            sleep(500);
+            sleep(690);
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
         ttsStage.close();
-        STOP = true;
     }
 
     public static void setVolume(float value) {

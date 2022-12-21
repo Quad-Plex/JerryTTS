@@ -6,7 +6,7 @@ Initially started out as a prompt to ChatGPT - 'Can you give me an example Text-
 which gave a very bare-bones Hello World application using the FreeTTS library - that I used as a good starting point, added a GUI
 to learn about Java GUI development and eventually switched over to MaryTTS when thinking of more features to add
 
-- 8 different languages (list voices here)
+- 8 different languages
 - 32 different voices across all languages
 - Separate Volume, Speed and Pitch control for the audio playback (major thanks to @waywardgeek's Sonic implementation https://github.com/waywardgeek/sonic)
 - Quickly export currently entered text as .wav to the Clipboard

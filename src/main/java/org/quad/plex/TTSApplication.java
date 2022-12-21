@@ -39,8 +39,6 @@ import java.util.*;
 
 public class TTSApplication extends Application {
     private MaryInterface mary;
-
-    private static TTSUtils ttsUtils;
     private static final URL infoIconUrl = TTSApplication.class.getResource("/info.png");
     private static final URL mainIconUrl = TTSApplication.class.getResource("/icon.png");
 
@@ -52,15 +50,23 @@ public class TTSApplication extends Application {
 
     @Override
     public void start(Stage ttsStage) {
-        ttsUtils = new TTSUtils();
         mary = TTSUtils.getMaryInstance();
 
         Label title = new javafx.scene.control.Label("JerryTTS");
         title.setFont(new Font("Verdana", 15));
         title.setStyle("-fx-font-weight: bold");
+        title.setPadding(new Insets(0,220,0,0));
+        CheckBox continuousCheckBox = new CheckBox("Loop");
+        continuousCheckBox.setPadding(new Insets(0,10,0,0));
+        // Add an action listener to the checkbox
+        continuousCheckBox.setOnAction(event -> TTSUtils.setPlayContinuously(continuousCheckBox.isSelected()));
+        CheckBox reverseCheckbox = new CheckBox("Reverse");
+        reverseCheckbox.setPadding(new Insets(0,95,0,0));
+        // Add an action listener to the checkbox
+        reverseCheckbox.setOnAction(event -> TTSUtils.setReverseAudio(reverseCheckbox.isSelected()));
         HBox titleBox = new HBox();
         titleBox.setAlignment(Pos.CENTER);
-        titleBox.getChildren().add(title);
+        titleBox.getChildren().addAll(continuousCheckBox, reverseCheckbox, title);
 
         // Add a text input field
         TextArea textArea = new javafx.scene.control.TextArea("Text to speak here");
@@ -73,7 +79,7 @@ public class TTSApplication extends Application {
         textBox.getChildren().add(textArea);
 
         int volumeSetting = 69;
-        Slider volumeSlider = new Slider(0, 250, volumeSetting);
+        Slider volumeSlider = new Slider(0, 300, volumeSetting);
         volumeSlider.setOrientation(Orientation.VERTICAL);
         volumeSlider.setPadding(new Insets(40,10,30,0));
         volumeSlider.setScaleY(1.3);
@@ -100,7 +106,7 @@ public class TTSApplication extends Application {
         volumeSlider.setLabelFormatter(percentageConverter);
 
         int speedSetting = 100;
-        Slider speedSlider = new Slider(0, 500, speedSetting);
+        Slider speedSlider = new Slider(0, 600, speedSetting);
         speedSlider.setOrientation(Orientation.VERTICAL);
         speedSlider.setPadding(new Insets(40,10,30,10));
         speedSlider.setScaleY(1.3);
@@ -127,7 +133,7 @@ public class TTSApplication extends Application {
         speedSlider.setLabelFormatter(multiplierConverter);
 
         int pitchSetting = 100;
-        Slider pitchSlider = new Slider(0, 500, pitchSetting);
+        Slider pitchSlider = new Slider(0, 600, pitchSetting);
         pitchSlider.setOrientation(Orientation.VERTICAL);
         pitchSlider.setPadding(new Insets(40,20,30,10));
         pitchSlider.setScaleY(1.3);
@@ -226,7 +232,7 @@ public class TTSApplication extends Application {
         chordCheckBox.setWrapText(true);
         chordCheckBox.setPadding(new Insets(15,0,0,0));
         // Add an action listener to the checkbox
-        chordCheckBox.setOnAction(event -> ttsUtils.setChordPitchEnabled(chordCheckBox.isSelected()));
+        chordCheckBox.setOnAction(event -> TTSUtils.setChordPitchEnabled(chordCheckBox.isSelected()));
 
         HBox buttonBox = new HBox();
         buttonBox.setSpacing(10);
@@ -244,18 +250,18 @@ public class TTSApplication extends Application {
         ttsStage.setTitle("JerryTTS v0.420.69");
         assert mainIconUrl != null;
         ttsStage.getIcons().add(new Image(mainIconUrl.toString()));
-        ttsStage.setHeight(420);
+        ttsStage.setHeight(500);
         ttsStage.setWidth(550);
         ttsStage.setResizable(false);
         ttsStage.centerOnScreen();
         ttsStage.setScene(scene);
         ttsStage.show();
 
-        volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> ttsUtils.setVolume(newValue.intValue()));
+        volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> TTSUtils.setVolume(newValue.intValue()));
 
-        speedSlider.valueProperty().addListener((observable, oldValue, newValue) -> ttsUtils.setSpeed(newValue.intValue()));
+        speedSlider.valueProperty().addListener((observable, oldValue, newValue) -> TTSUtils.setSpeed(newValue.intValue()));
 
-        pitchSlider.valueProperty().addListener((observable, oldValue, newValue) -> ttsUtils.setPitch(newValue.intValue()));
+        pitchSlider.valueProperty().addListener((observable, oldValue, newValue) -> TTSUtils.setPitch(newValue.intValue()));
 
         languageComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
             // get the Locale object for the selected display name
@@ -282,15 +288,14 @@ public class TTSApplication extends Application {
         // Add an action listener to the button
         speakButton.setOnAction(e -> {
             if (!running.get()) {
-                String input = textArea.getText();
-                ttsUtils.speak(input);
+                speakText(textArea);
             } else {
-                TTSUtils.STOP = true;
+                TTSUtils.setStop(true);
                 //calling speak again here is just a workaround. Sometimes the audio playback gets stuck when using the
                 //sliders while audio is playing. Just setting the 'STOP' variable won't stop the playback in this case,
                 //as something in the Sonic thread gets stuck. Calling speak again wakes this tread up, so that it can
                 //recognize that the STOP value is set, and terminate the Stream normally
-                ttsUtils.speak("stopping");
+                TTSUtils.speak("stopping");
             }
         });
 
@@ -301,25 +306,30 @@ public class TTSApplication extends Application {
 
         textArea.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER && event.isControlDown() && !event.isShiftDown()) {
-                String input = textArea.getText();
-                ttsUtils.speak(input);
+                speakText(textArea);
             } else if (event.getCode() == KeyCode.ESCAPE) {
-                ttsUtils.gracefulShutdown(ttsStage);
+                TTSUtils.gracefulShutdown(ttsStage);
             }
         });
 
         ttsStage.setOnCloseRequest(e -> {
             e.consume();
-            ttsUtils.gracefulShutdown(ttsStage);
+            TTSUtils.gracefulShutdown(ttsStage);
         });
 
-        ttsUtils.speak("Jerry-T-T-S initialized.");
+        TTSUtils.speak("Jerry-T-T-S initialized.");
 
         //shitty workaround; the comboboxes don't close automatically the first time they're used
         //to select an item. Closing one of them once clears this behavior, for some reason,
         //so we just open and close one here, which can't even be seen when the program opens
         languageComboBox.show();
         languageComboBox.hide();
+    }
+
+    private static void speakText(TextArea textArea) {
+        TTSUtils.setStop(false);
+        String input = textArea.getText();
+        TTSUtils.speak(input);
     }
 
     private void exportAudioToClipboard(String input) {

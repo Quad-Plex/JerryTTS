@@ -5,10 +5,14 @@ import marytts.LocalMaryInterface;
 import marytts.MaryInterface;
 import marytts.exceptions.MaryConfigurationException;
 import marytts.exceptions.SynthesisException;
+import org.apache.commons.lang.ArrayUtils;
 
 import javax.sound.sampled.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -16,6 +20,7 @@ import static java.lang.Thread.sleep;
 
 public class TTSUtils {
 
+    private static boolean REVERSE_AUDIO = false;
     public static boolean STOP = false;
     private static final String punctuation = ".,:-!?";
     private static final MaryInterface mary;
@@ -34,11 +39,12 @@ public class TTSUtils {
     private static final float RATE = 1.0f;
     private static float VOLUME = 0.69F;
     private static boolean EMULATE_CHORD_PITCH = false;
+    private static boolean PLAY_CONTINUOUSLY = false;
     private static final int QUALITY = 0;
 
 
 
-    void speak(String input) {
+    static void speak(String input) {
         // Check if there is any input to speak, otherwise return
         if (input.isEmpty()) {
             return;
@@ -72,15 +78,63 @@ public class TTSUtils {
                     speechStream = AudioSystem.getAudioInputStream(targetFormat, speechStream);
                 }
 
-                SourceDataLine.Info info = new DataLine.Info(SourceDataLine.class, targetFormat);
-                SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
-                line.open(targetFormat);
-                line.start();
-                runSonic(speechStream, line,
-                        (int)targetFormat.getSampleRate(), targetFormat.getChannels());
-                line.drain();
-                line.stop();
+                byte[] audioData;
+                try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                    byte[] buffer = new byte[1024];
+                    int read;
+                    while ((read = speechStream.read(buffer, 0, buffer.length)) != -1) {
+                        baos.write(buffer, 0, read);
+                    }
+                    audioData = baos.toByteArray();
+                }
+                // Close the stream
+                speechStream.close();
 
+                if (REVERSE_AUDIO) {
+                    ArrayUtils.reverse(audioData);
+                }
+
+                // Trim all leading and trailing silence
+                // This allows Repeating speech to repeat without pause
+                // We detect the first 12 samples in the start and end of the byte array that are >125 in value
+                // We use these cutoffs as the new start and end points. The audio at these extreme ends in the stream
+                // isn't audible, so it just results in a more concise audiostream containing our speech
+                int start = 0;
+                int end = audioData.length - 1;
+                int numHitsStart = 0;
+                int numHitsEnd = 0;
+                int numCutoff = 1;
+                if (PLAY_CONTINUOUSLY) {
+                    numCutoff = 5;
+                }
+                while (start < audioData.length && numHitsStart < numCutoff) {
+                    if (audioData[start] > 125) {
+                        numHitsStart++;
+                    }
+                    start++;
+                }
+                while (end >= 0 && numHitsEnd < numCutoff * 2) {
+                    if (audioData[end] > 125) {
+                        numHitsEnd++;
+                    }
+                    end--;
+                }
+                audioData = Arrays.copyOfRange(audioData, start - 1, end + 1);
+
+                do {
+                    AudioInputStream loopStream = new AudioInputStream(new ByteArrayInputStream(audioData),targetFormat, audioData.length / targetFormat.getFrameSize());
+                    SourceDataLine.Info info = new DataLine.Info(SourceDataLine.class, targetFormat);
+                    SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
+
+                    line.open(targetFormat);
+                    line.start();
+
+                    runSonic(loopStream, line,
+                            (int) targetFormat.getSampleRate(), targetFormat.getChannels());
+
+                    line.drain();
+                    line.stop();
+                } while(PLAY_CONTINUOUSLY && TTSApplication.running.get());
             } catch (SynthesisException ex) {
                 System.err.println("Error speaking text: " + ex.getMessage());
                 ex.printStackTrace();
@@ -94,7 +148,7 @@ public class TTSUtils {
     }
 
     // Run sonic.
-    private void runSonic(
+    private static void runSonic(
             AudioInputStream audioStream,
             SourceDataLine line,
             int sampleRate,
@@ -114,7 +168,7 @@ public class TTSUtils {
         SONIC.setQuality(TTSUtils.QUALITY);
         TTSApplication.running.set(true);
         do {
-            if (STOP || !TTSApplication.running.get()) { TTSApplication.running.set(false); STOP=false; return; }
+            if (STOP || !TTSApplication.running.get()) { TTSApplication.running.set(false); return; }
             numRead = audioStream.read(inBuffer, 0, bufferSize);
             if(numRead <= 0) {
                 SONIC.flushStream();
@@ -130,8 +184,10 @@ public class TTSUtils {
         } while(numRead > 0);
     }
 
-    void gracefulShutdown(Stage ttsStage) {
+    static void gracefulShutdown(Stage ttsStage) {
         // Exit gracefully
+        STOP = true;
+        PLAY_CONTINUOUSLY = false;
         File wavFile = new File("temp\\export.wav");
         if (wavFile.exists()) {
             boolean success = wavFile.delete();
@@ -143,7 +199,7 @@ public class TTSUtils {
         mary.setLocale(Locale.US);
         speak("Goodbye!");
         try {
-            sleep(1500);
+            sleep(500);
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
@@ -151,30 +207,42 @@ public class TTSUtils {
         STOP = true;
     }
 
-    public void setVolume(float value) {
-        TTSUtils.VOLUME = value / 100;
+    public static void setVolume(float value) {
+        VOLUME = value / 100;
         SONIC.setVolume(value / 100);
     }
 
-    public void setSpeed(float value) {
-        //we don't want the user to be able to set speed to 0, so we cap it to 1 behind the scenes
-        float speed = (value == 0.0F) ? 1 : value;
+    public static void setSpeed(float value) {
+        //we don't want the user to be able to set speed to 0, so we cap it to 2 behind the scenes
+        float speed = (value == 0.0F) ? 2 : value;
         speed = speed / 100;
-        TTSUtils.SPEED = speed;
+        SPEED = speed;
         SONIC.setSpeed(speed);
     }
 
-    public void setPitch(float value) {
+    public static void setPitch(float value) {
         //we don't want the user to be able to set pitch to 0, so we cap it to 1 behind the scenes
         float pitch = (value == 0.0F) ? 1 : value;
         pitch = pitch / 100;
-        TTSUtils.PITCH = pitch;
+        PITCH = pitch;
         SONIC.setPitch(pitch);
     }
 
-    public void setChordPitchEnabled(boolean enabled) {
+    public static void setChordPitchEnabled(boolean enabled) {
         SONIC.setChordPitch(enabled);
-        TTSUtils.EMULATE_CHORD_PITCH = enabled;
+        EMULATE_CHORD_PITCH = enabled;
+    }
+
+    public static void setPlayContinuously(boolean enabled) {
+        PLAY_CONTINUOUSLY = enabled;
+    }
+
+    public static void setReverseAudio(boolean enabled) {
+        REVERSE_AUDIO = enabled;
+    }
+
+    public static void setStop(boolean stop) {
+        STOP = stop;
     }
 
     public static MaryInterface getMaryInstance() {

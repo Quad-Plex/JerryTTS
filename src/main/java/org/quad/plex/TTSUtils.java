@@ -10,6 +10,7 @@ import javax.sound.sampled.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Objects;
 
 import static java.lang.Thread.sleep;
 
@@ -46,6 +47,9 @@ public class TTSUtils {
             //this causes MaryTTS to behave more predictably when speaking as it sees a finished sentence
             input = input + ".";
         }
+        if(Objects.equals(mary.getLocale().getDisplayName(), Locale.forLanguageTag("ru").getDisplayName())){
+            input = CyrillicLatinConverter.latinToCyrillic(input);
+        }
 
         String finalInput = input;
         new Thread(() -> {
@@ -53,18 +57,30 @@ public class TTSUtils {
                 // Generate audio data for the input text
                 AudioInputStream speechStream = mary.generateAudio(finalInput);
 
-                AudioFormat format = speechStream.getFormat();
-                int sampleRate = (int)format.getSampleRate();
-                int numChannels = format.getChannels();
-                SourceDataLine.Info info = new DataLine.Info(SourceDataLine.class, format,
-                        ((int)speechStream.getFrameLength()*format.getFrameSize()));
+                AudioFormat sourceFormat = speechStream.getFormat();
+                AudioFormat targetFormat = new AudioFormat(
+                        AudioFormat.Encoding.PCM_SIGNED,
+                        sourceFormat.getSampleRate(),
+                        16,  // sample size in bits
+                        sourceFormat.getChannels(),
+                        sourceFormat.getChannels() * 2,  // frame size
+                        sourceFormat.getSampleRate(),
+                        false  // little-endian
+                );
+
+                if (AudioSystem.isConversionSupported(targetFormat, sourceFormat)) {
+                    speechStream = AudioSystem.getAudioInputStream(targetFormat, speechStream);
+                }
+
+                SourceDataLine.Info info = new DataLine.Info(SourceDataLine.class, targetFormat);
                 SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
-                line.open(speechStream.getFormat());
+                line.open(targetFormat);
                 line.start();
                 runSonic(speechStream, line,
-                        sampleRate, numChannels);
+                        (int)targetFormat.getSampleRate(), targetFormat.getChannels());
                 line.drain();
                 line.stop();
+
             } catch (SynthesisException ex) {
                 System.err.println("Error speaking text: " + ex.getMessage());
                 ex.printStackTrace();

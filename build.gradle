@@ -95,11 +95,6 @@ dependencies {
         exclude group: 'gov.nist.math', module: 'Jampack'
     }
 
-    implementation group: 'de.dfki.mary', name: 'marytts-lang-te', version: '5.2.1', {
-        exclude group: 'com.twmacinta', module: 'fast-md5'
-        exclude group: 'gov.nist.math', module: 'Jampack'
-    }
-
     implementation group: 'de.dfki.mary', name: 'marytts-lang-tr', version: '5.2.1', {
         exclude group: 'com.twmacinta', module: 'fast-md5'
         exclude group: 'gov.nist.math', module: 'Jampack'

@@ -28,7 +28,9 @@ https://github.com/marytts/voice-upmc-pierre-hsmm/releases/download/v5.2/voice-u
 https://github.com/marytts/voice-istc-lucia-hsmm/releases/download/v5.2/voice-istc-lucia-hsmm-5.2.zip
 //can't be added because luxembourgish isn't available, as including the dependency will cause compilation errors
 //https://github.com/marytts/voice-marylux-lb/releases/download/v5.2/voice-marylux-lb-5.2.zip
-https://github.com/marytts/voice-cmu-nk-hsmm/releases/download/v5.2/voice-cmu-nk-hsmm-5.2.zip
+//Telugu voice, not even sure what this language is...
+//https://github.com/marytts/voice-cmu-nk-hsmm/releases/download/v5.2/voice-cmu-nk-hsmm-5.2.zip
 https://github.com/marytts/voice-dfki-ot/releases/download/v5.2/voice-dfki-ot-5.2.zip
 https://github.com/marytts/voice-dfki-ot-hsmm/releases/download/v5.2/voice-dfki-ot-hsmm-5.2.zip
 https://github.com/marytts/voice-bits1-hsmm/releases/download/v5.2/voice-bits1-hsmm-5.2.zip
+https://github.com/marytts/voice-voxforge-ru-nsh/releases/download/v5.0-SNAPSHOT/voice-voxforge-ru-nsh-5.0-SNAPSHOT.zip

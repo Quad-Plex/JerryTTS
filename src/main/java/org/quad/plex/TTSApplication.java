@@ -27,6 +27,7 @@ import javafx.util.StringConverter;
 import marytts.MaryInterface;
 
 import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import java.awt.*;
@@ -174,18 +175,19 @@ public class TTSApplication extends Application {
         sliderBox.getChildren().add(pitchBox);
 
         Button speakButton = new Button("Speak!");
-        speakButton.setPrefSize(85, 32);
-        speakButton.setFont(new Font("Verdana", 12));
+        speakButton.setPrefSize(96, 45);
+        speakButton.setFont(new Font("Verdana", 14));
+        speakButton.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
         VBox speakButtonBox = new VBox();
         speakButtonBox.getChildren().add(speakButton);
-        speakButtonBox.setPadding(new Insets(16,0,0,0));
+        speakButtonBox.setPadding(new Insets(4,0,0,0));
 
         Button exportButton = new Button("Export");
-        exportButton.setPrefSize(85, 32);
+        exportButton.setPrefSize(80, 45);
         exportButton.setFont(new Font("Verdana", 12));
         VBox exportButtonBox = new VBox();
         exportButtonBox.getChildren().add(exportButton);
-        exportButtonBox.setPadding(new Insets(16,0,0,0));
+        exportButtonBox.setPadding(new Insets(4,0,0,0));
 
         Locale[] languages = mary.getAvailableLocales().toArray(new Locale[0]);
         Arrays.sort(languages, Comparator.comparing(Locale::getDisplayName));
@@ -197,7 +199,7 @@ public class TTSApplication extends Application {
         }
 
         ComboBox<String> languageComboBox = new ComboBox<>(FXCollections.observableArrayList(displayNameToLocaleMap.keySet()));
-        languageComboBox.setPrefSize(125, 32);
+        languageComboBox.setPrefSize(122, 32);
         languageComboBox.setStyle("-fx-font-family: Verdana; -fx-font-size: 12;");
         languageComboBox.getSelectionModel().select(1);
         Label languageLabel = new Label();
@@ -209,9 +211,10 @@ public class TTSApplication extends Application {
 
         String[] voices = mary.getAvailableVoices(mary.getLocale()).toArray(new String[0]);
         ComboBox<String> voiceComboBox = new ComboBox<>(FXCollections.observableArrayList(voices));
-        voiceComboBox.setPrefSize(135, 32);
+        voiceComboBox.setPrefSize(150, 32);
         voiceComboBox.setStyle("-fx-font-family: Verdana; -fx-font-size: 12;");
-        voiceComboBox.getSelectionModel().select(0);
+        voiceComboBox.getSelectionModel().select(5);
+        mary.setVoice(voiceComboBox.getSelectionModel().getSelectedItem());
         Label voiceLabel = new Label();
         voiceLabel.setText("Voice:");
         voiceLabel.setFont(new Font("Verdana", 10));
@@ -242,7 +245,7 @@ public class TTSApplication extends Application {
         assert mainIconUrl != null;
         ttsStage.getIcons().add(new Image(mainIconUrl.toString()));
         ttsStage.setHeight(420);
-        ttsStage.setWidth(530);
+        ttsStage.setWidth(550);
         ttsStage.setResizable(false);
         ttsStage.centerOnScreen();
         ttsStage.setScene(scene);
@@ -325,8 +328,26 @@ public class TTSApplication extends Application {
                 createPopupWindow(false);
                 return;
             }
+            if(Objects.equals(mary.getLocale().getCountry(), Locale.forLanguageTag("ru").getCountry())){
+                input = CyrillicLatinConverter.latinToCyrillic(input);
+            }
             // Generate the audio data for the given text
             AudioInputStream audio = mary.generateAudio(input);
+
+            AudioFormat sourceFormat = audio.getFormat();
+            AudioFormat targetFormat = new AudioFormat(
+                    AudioFormat.Encoding.PCM_SIGNED,
+                    sourceFormat.getSampleRate(),
+                    16,  // sample size in bits
+                    sourceFormat.getChannels(),
+                    sourceFormat.getChannels() * 2,  // frame size
+                    sourceFormat.getSampleRate(),
+                    false  // little-endian
+            );
+
+            if (AudioSystem.isConversionSupported(targetFormat, sourceFormat)) {
+                audio = AudioSystem.getAudioInputStream(targetFormat, audio);
+            }
 
             // Write the audio data to a file in the WAV format
             File wavFile = new File("temp\\export.wav");

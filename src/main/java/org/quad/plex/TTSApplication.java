@@ -55,7 +55,7 @@ public class TTSApplication extends Application {
         ttsUtils = new TTSUtils();
         mary = TTSUtils.getMaryInstance();
 
-        Label title = new javafx.scene.control.Label("Shitty Text to Speech Program go brrr");
+        Label title = new javafx.scene.control.Label("JerryTTS");
         title.setFont(new Font("Verdana", 15));
         title.setStyle("-fx-font-weight: bold");
         HBox titleBox = new HBox();
@@ -180,14 +180,14 @@ public class TTSApplication extends Application {
         speakButton.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
         VBox speakButtonBox = new VBox();
         speakButtonBox.getChildren().add(speakButton);
-        speakButtonBox.setPadding(new Insets(4,0,0,0));
+        speakButtonBox.setPadding(new Insets(3,0,0,0));
 
         Button exportButton = new Button("Export");
         exportButton.setPrefSize(80, 45);
         exportButton.setFont(new Font("Verdana", 12));
         VBox exportButtonBox = new VBox();
         exportButtonBox.getChildren().add(exportButton);
-        exportButtonBox.setPadding(new Insets(4,0,0,0));
+        exportButtonBox.setPadding(new Insets(3,0,0,0));
 
         Locale[] languages = mary.getAvailableLocales().toArray(new Locale[0]);
         Arrays.sort(languages, Comparator.comparing(Locale::getDisplayName));
@@ -241,7 +241,7 @@ public class TTSApplication extends Application {
         root.setBottom(buttonBox);
 
         Scene scene = new Scene(root);
-        ttsStage.setTitle("Shitty AI-Generated TTS v0.420.69");
+        ttsStage.setTitle("JerryTTS v0.420.69");
         assert mainIconUrl != null;
         ttsStage.getIcons().add(new Image(mainIconUrl.toString()));
         ttsStage.setHeight(420);
@@ -313,7 +313,7 @@ public class TTSApplication extends Application {
             ttsUtils.gracefulShutdown(ttsStage);
         });
 
-        ttsUtils.speak("Shitty T T S version 0.4 20.69 initialized.");
+        ttsUtils.speak("Jerry-T-T-S initialized.");
 
         //shitty workaround; the comboboxes don't close automatically the first time they're used
         //to select an item. Closing one of them once clears this behavior, for some reason,

@@ -1,5 +1,7 @@
 //From: https://github.com/marytts/marytts/blob/master/download/marytts-components.xml
 //
+https://github.com/synesthesiam/docker-marytts/raw/master/voices/ru/voice-ac-irina-hsmm-5.2.jar
+https://github.com/synesthesiam/docker-marytts/raw/master/voices/sv/voice-stts-sv-hb-hsmm-5.2.jar
 https://github.com/marytts/voice-bits1-hsmm/releases/download/v5.2/voice-bits1-hsmm-5.2.zip
 https://github.com/marytts/voice-bits3-hsmm/releases/download/v5.2/voice-bits3-hsmm-5.2.zip
 https://github.com/marytts/voice-dfki-pavoque-neutral/releases/download/v5.2/voice-dfki-pavoque-neutral-5.2.zip

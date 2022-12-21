@@ -20,21 +20,29 @@ tasks.register('downloadAllVoices') {
         }
         if (libDir.list().length == 0) {
             urls.each { url ->
-                // Download the zip file
-                def zipFile = new File(libDir, "${url.substring(url.lastIndexOf('/') + 1)}")
-                new URL(url as String).withInputStream{ i -> zipFile.withOutputStream{ it << i }}
+                // Download the file
+                def file = new File(libDir, "${url.substring(url.lastIndexOf('/') + 1)}")
+                new URL(url as String).withInputStream{ i -> file.withOutputStream{ it << i }}
 
-                // Unzip the file
-                ant.unzip(src: zipFile, dest: libDir.getParentFile()) {
-                    patternset( ) {
-                        include( name: 'lib/' )
+                // Check if the file is a .jar file or a .zip file
+                if (file.name.endsWith('.jar')) {
+                    // If it's a .jar file, just copy it to the /lib folder
+                    ant.copy(todir: libDir, file: file)
+                } else if (file.name.endsWith('.zip')) {
+                    // If it's a .zip file, unzip it to the /lib folder
+                    ant.unzip(src: file, dest: libDir.getParentFile()) {
+                        patternset( ) {
+                            include( name: 'lib/' )
+                        }
                     }
+                    // Delete the .zip file after it's been unzipped
+                    file.delete()
                 }
-                zipFile.delete()
             }
         }
     }
 }
+
 
 build.dependsOn downloadAllVoices
 

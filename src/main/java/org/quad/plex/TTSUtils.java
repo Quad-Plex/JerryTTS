@@ -141,7 +141,7 @@ public class TTSUtils {
         }
 
         mary.setLocale(Locale.US);
-        speak("Have a shitty day motherfucker!");
+        speak("Goodbye!");
         try {
             sleep(1500);
         } catch (InterruptedException ex) {

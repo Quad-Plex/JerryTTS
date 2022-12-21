@@ -2,7 +2,10 @@
 
 Mary + Java = Jary -> JerryTTS
 
-![image](https://user-images.githubusercontent.com/39552449/208804492-0fc87689-9f0a-4426-81ab-0c950c3143ad.png)
+<p align="center">
+  ![image](https://user-images.githubusercontent.com/39552449/209025976-cd9deaf2-7037-4ca1-9f60-2b9bb486c984.png)
+</p>
+
 
 Initially started out as a prompt to ChatGPT - 'Can you give me an example Text-To-Speech application done in Java?' 
 which gave a very bare-bones Hello World application using the FreeTTS library - that I used as a good starting point, added a GUI

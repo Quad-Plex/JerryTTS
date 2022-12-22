@@ -5,7 +5,7 @@
 # JerryTTS 
 
 
-Mary + Java = Jary -> JerryTTS
+M**ary** + **J**ava = *Jary* -> JerryTTS
 
 <p align="center">
   <img src="https://user-images.githubusercontent.com/39552449/209025976-cd9deaf2-7037-4ca1-9f60-2b9bb486c984.png" alt="screenshot" width="550" height="500">

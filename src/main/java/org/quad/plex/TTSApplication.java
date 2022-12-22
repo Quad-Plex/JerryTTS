@@ -90,18 +90,7 @@ public class TTSApplication extends Application {
         volumeSlider.setMinorTickCount(1);
         volumeSlider.setShowTickMarks(true);
         volumeSlider.setShowTickLabels(true);
-
-        // create a StringConverter to convert the slider values to percentage labels
-        StringConverter<Double> percentageConverter = new StringConverter<>() {
-            @Override
-            public String toString(Double value) {
-                // format the label as a percentage
-                return String.format("%d%%", value.intValue());
-            }
-            @Override
-            public Double fromString(String string) { return null; }
-        };
-
+        StringConverter<Double> percentageConverter = getPercentageConverter();
         // set the label formatter for the major tick marks
         volumeSlider.setLabelFormatter(percentageConverter);
 
@@ -117,18 +106,7 @@ public class TTSApplication extends Application {
         speedSlider.setMinorTickCount(10);
         speedSlider.setShowTickMarks(true);
         speedSlider.setShowTickLabels(true);
-
-        // create a StringConverter to convert the slider values to "x.xx" labels
-        StringConverter<Double> multiplierConverter = new StringConverter<>() {
-            @Override
-            public String toString(Double value) {
-                // format the label as "x.xx"
-                return String.format("%.2fx", value / 100);
-            }
-
-            @Override
-            public Double fromString(String string) { return null; }
-        };
+        StringConverter<Double> multiplierConverter = getMultiplierConverter();
         // set the label formatter for the major tick marks
         speedSlider.setLabelFormatter(multiplierConverter);
 
@@ -232,7 +210,6 @@ public class TTSApplication extends Application {
         chordCheckBox.setWrapText(true);
         chordCheckBox.setPadding(new Insets(15,0,0,0));
         // Add an action listener to the checkbox
-        chordCheckBox.setOnAction(event -> TTSUtils.setChordPitchEnabled(chordCheckBox.isSelected()));
 
         HBox buttonBox = new HBox();
         buttonBox.setSpacing(10);
@@ -256,6 +233,56 @@ public class TTSApplication extends Application {
         ttsStage.centerOnScreen();
         ttsStage.setScene(scene);
         ttsStage.show();
+
+        addActionListeners(chordCheckBox,
+                ttsStage,
+                textArea,
+                volumeSlider,
+                speedSlider,
+                pitchSlider,
+                speakButton,
+                exportButton,
+                displayNameToLocaleMap,
+                languageComboBox,
+                voiceComboBox);
+
+        TTSUtils.speak("Jerry-T-T-S initialized.");
+
+        //shitty workaround; the comboboxes don't close automatically the first time they're used
+        //to select an item. Closing one of them once clears this behavior, for some reason,
+        //so we just open and close one here, which can't even be seen when the program opens
+        languageComboBox.show();
+        languageComboBox.hide();
+    }
+
+    private static StringConverter<Double> getMultiplierConverter() {
+        return new StringConverter<>() {
+            @Override
+            public String toString(Double value) {
+                // format the label as "x.xx"
+                return String.format("%.2fx", value / 100);
+            }
+
+            @Override
+            public Double fromString(String string) { return null; }
+        };
+    }
+
+    private static StringConverter<Double> getPercentageConverter() {
+        return new StringConverter<>() {
+            @Override
+            public String toString(Double value) {
+                // format the label as a percentage
+                return String.format("%d%%", value.intValue());
+            }
+            @Override
+            public Double fromString(String string) { return null; }
+        };
+    }
+
+    private void addActionListeners(CheckBox chordCheckBox, Stage ttsStage, TextArea textArea, Slider volumeSlider, Slider speedSlider, Slider pitchSlider, Button speakButton, Button exportButton, Map<String, Locale> displayNameToLocaleMap, ComboBox<String> languageComboBox, ComboBox<String> voiceComboBox) {
+
+        chordCheckBox.setOnAction(event -> TTSUtils.setChordPitchEnabled(chordCheckBox.isSelected()));
 
         volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> TTSUtils.setVolume(newValue.intValue()));
 
@@ -344,14 +371,6 @@ public class TTSApplication extends Application {
             e.consume();
             TTSUtils.gracefulShutdown(ttsStage);
         });
-
-        TTSUtils.speak("Jerry-T-T-S initialized.");
-
-        //shitty workaround; the comboboxes don't close automatically the first time they're used
-        //to select an item. Closing one of them once clears this behavior, for some reason,
-        //so we just open and close one here, which can't even be seen when the program opens
-        languageComboBox.show();
-        languageComboBox.hide();
     }
 
     private static void speakText(TextArea textArea) {

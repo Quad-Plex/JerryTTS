@@ -443,7 +443,7 @@ public class TTSApplication extends Application {
         }
         messageLabel.setMaxWidth(130);
         messageLabel.setWrapText(true);
-        messageLabel.setPadding(new Insets(10, 10, 10, 10)); // Add some padding around the label
+        messageLabel.setPadding(new Insets(10, 0, 10, 10)); // Add some padding around the label
         messageLabel.setTextAlignment(TextAlignment.CENTER); // Center the label's text
 
         // Create the close button
@@ -453,23 +453,23 @@ public class TTSApplication extends Application {
 
         // Create the icon
         ImageView infoIcon = new ImageView(new Image(infoIconUrl.toString()));
-        infoIcon.setFitWidth(50);
-        infoIcon.setFitHeight(50);
+        infoIcon.setFitWidth(69);
+        infoIcon.setFitHeight(69);
+
+        HBox messageBox = new HBox();
+        messageBox.getChildren().addAll(infoIcon, messageLabel);
+        messageBox.setAlignment(Pos.CENTER); // Center the layout
+        messageBox.setPadding(new Insets(0, 10, 0, 10)); // Add some padding around the layout
 
         // Create the layout
         VBox closeButtonBox = new VBox();
-        closeButtonBox.getChildren().addAll(messageLabel, closeButton);
+        closeButtonBox.getChildren().addAll(closeButton);
         closeButtonBox.setAlignment(Pos.BOTTOM_RIGHT);
-        closeButtonBox.setPadding(new Insets(10,40,10,0));
-
-        HBox messageBox = new HBox();
-        messageBox.getChildren().addAll(infoIcon, closeButtonBox);
-        messageBox.setAlignment(Pos.CENTER); // Center the layout
-        messageBox.setPadding(new Insets(10, 10, 30, 10)); // Add some padding around the layout
+        closeButtonBox.setPadding(new Insets(0,40,10,0));
 
         BorderPane popupRoot = new BorderPane();
-        popupRoot.setLeft(messageBox);
-        popupRoot.setRight(closeButtonBox);
+        popupRoot.setTop(messageBox);
+        popupRoot.setBottom(closeButtonBox);
 
         // Set the scene for the window and show it
         Scene popupScene = new Scene(popupRoot);

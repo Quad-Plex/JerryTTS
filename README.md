@@ -1,8 +1,9 @@
-# JerryTTS 
-
 <p align="center">
   <img src="https://user-images.githubusercontent.com/39552449/209026824-8937a73f-c01c-4945-9794-0a93b6995b87.png" alt="icon" width="150" height="150">
 </p>
+
+# JerryTTS 
+
 
 Mary + Java = Jary -> JerryTTS
 

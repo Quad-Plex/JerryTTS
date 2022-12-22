@@ -1,0 +1,12 @@
+- Reset button für die slider
+- cyrillic transcriptor textArea
+- export -> to clipboard/to file
+- live edit mit record button im export button
+- export button generell kann live recording machen während gespielt wird
+- über Mixer.Info[] info =  getMixerInfo(); mikrofone finden
+   - tts über mikrofon ausgeben
+   - vll zuerst mit mvp testen
+- maybe translator?...
+- voice-to-text?
+   - mic input through mixer or just TargetDataLine
+   - https://www.baeldung.com/java-sound-api-capture-mic

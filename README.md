@@ -25,6 +25,7 @@ to learn about Java GUI development and eventually switched over to MaryTTS when
 - Quickly export currently entered text as .wav to the Clipboard
 - Exported audio is affected by Volume, Speed and Pitch control
 - 'Loop' and 'Reverse' functions to loop or play the text in reverse
+- Automatically transcripts cyrillic <-> latin letters in russian mode to enable either latin/cyrillic writing to be spoken in russian
 
 haven't thought about packaging/releasing yet, so everything is done through gradle/IntelliJ for the time being
 

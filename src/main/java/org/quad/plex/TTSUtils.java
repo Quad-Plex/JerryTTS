@@ -45,7 +45,7 @@ public class TTSUtils {
     private static float volume = 0.69F;
     private static boolean emulateChordPitch = false;
     private static boolean playContinuously = false;
-    private static boolean exportAsMp3 = false;
+    private static boolean exportAsMp3 = true;
 
     static void speak(String input) {
         // Check if there is any input to speak, otherwise return

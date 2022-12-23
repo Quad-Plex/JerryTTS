@@ -447,6 +447,9 @@ public class TTSApplication extends Application {
         closeButton.setMinSize(35,25);
         closeButton.setAlignment(Pos.CENTER_RIGHT);
         closeButton.setOnAction(event -> popupWindow.close()); // Close the window when the button is clicked
+        HBox dummyCLoseButtonBox = new HBox();
+        dummyCLoseButtonBox.getChildren().add(closeButton);
+        dummyCLoseButtonBox.setPadding(new Insets(0,50,0,10));
 
         // Create the icon
         ImageView infoIcon = new ImageView(new Image(infoIconUrl.toString()));
@@ -454,10 +457,9 @@ public class TTSApplication extends Application {
         infoIcon.setFitHeight(69);
 
         // Create the layout
-        HBox closeButtonBox = new HBox();
-        closeButtonBox.getChildren().add(closeButton);
-        closeButtonBox.setAlignment(Pos.BOTTOM_RIGHT);
-        closeButtonBox.setPadding(new Insets(0,50,10,0));
+        HBox buttonsBox = new HBox();
+        buttonsBox.setAlignment(Pos.BOTTOM_RIGHT);
+        buttonsBox.setPadding(new Insets(0,50,10,0));
 
         // Create the message label
         Label messageLabel = new Label();
@@ -470,6 +472,7 @@ public class TTSApplication extends Application {
         } else if (state == popupWindowState.SHUTDOWN) {
             messageLabel.setText("Do you really want to quit?");
             closeButton.setText("No");
+            closeButton.setAlignment(Pos.CENTER);
             // Create the close button
             Button quitButton = new Button("Yes");
             quitButton.setMinSize(35,25);
@@ -477,12 +480,10 @@ public class TTSApplication extends Application {
                 popupWindow.close();
                 TTSUtils.gracefulShutdown(TTSApplication.ttsStage);
             }); // Close the window when the button is clicked
-            HBox dummyQuitButtonBox = new HBox();
-            dummyQuitButtonBox.getChildren().add(quitButton);
-            dummyQuitButtonBox.setPadding(new Insets(0,0,0,10));
-            closeButtonBox.setPadding(new Insets(0,30,10,0));
-            closeButtonBox.getChildren().add(dummyQuitButtonBox);
+            buttonsBox.setPadding(new Insets(0,0,10,30));
+            buttonsBox.getChildren().add(quitButton);
         }
+        buttonsBox.getChildren().add(dummyCLoseButtonBox);
 
         messageLabel.setMaxWidth(130);
         messageLabel.setWrapText(true);
@@ -496,7 +497,7 @@ public class TTSApplication extends Application {
 
         BorderPane popupRoot = new BorderPane();
         popupRoot.setTop(messageBox);
-        popupRoot.setBottom(closeButtonBox);
+        popupRoot.setBottom(buttonsBox);
 
         // Set the scene for the window and show it
         Scene popupScene = new Scene(popupRoot);

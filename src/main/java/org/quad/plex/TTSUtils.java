@@ -27,12 +27,12 @@ public class TTSUtils {
 
     static boolean REVERSE_AUDIO = false;
     public static boolean STOP = false;
-    private static final String punctuation = ".,:-!?";
-    private static final MaryInterface mary;
+    private static final String PUNCTUATION = ".,:-!?";
+    private static final MaryInterface MARY;
 
     static {
         try {
-            mary = new LocalMaryInterface();
+            MARY = new LocalMaryInterface();
         } catch (MaryConfigurationException e) {
             throw new RuntimeException(e);
         }
@@ -41,7 +41,7 @@ public class TTSUtils {
     static Sonic sonic;
     private static float speed = 1.0F;
     private static float pitch = 1.0F;
-    private static final float RATE = 1.0f;
+    private static final float RATE = 1.0F;
     private static float volume = 0.69F;
     private static boolean emulateChordPitch = false;
     private static boolean playContinuously = false;
@@ -58,7 +58,7 @@ public class TTSUtils {
             SourceDataLine line = null;
             try {
                 // Generate audio data for the input text
-                AudioInputStream speechStream = mary.generateAudio(finalInput);
+                AudioInputStream speechStream = MARY.generateAudio(finalInput);
 
                 AudioFormat sourceFormat = speechStream.getFormat();
                 AudioFormat targetFormat = new AudioFormat(
@@ -146,12 +146,12 @@ public class TTSUtils {
     static String sanitizeInput(String input) {
         if (input.isEmpty()) {
             return null;
-        } else if (!punctuation.contains(input.subSequence(input.length()-1, input.length()))) {
+        } else if (!PUNCTUATION.contains(input.subSequence(input.length()-1, input.length()))) {
             //If there is input, check if it ends in punctuation, if it doesn't, add a period
             //this causes MaryTTS to behave more predictably when speaking as it sees a finished sentence
             input = input + ".";
         }
-        if(Objects.equals(mary.getLocale().getDisplayName(), Locale.forLanguageTag("ru").getDisplayName())){
+        if(Objects.equals(MARY.getLocale().getDisplayName(), Locale.forLanguageTag("ru").getDisplayName())){
             input = CyrillicLatinConverter.latinToCyrillic(input);
         }
         return input;
@@ -253,7 +253,7 @@ public class TTSUtils {
             }
         }
 
-        mary.setLocale(Locale.US);
+        MARY.setLocale(Locale.US);
         speak("Goodbye!");
         try {
             sleep(690);
@@ -273,7 +273,7 @@ public class TTSUtils {
 
 
             // Generate the audio data for the given text
-            AudioInputStream audio = mary.generateAudio(input);
+            AudioInputStream audio = MARY.generateAudio(input);
 
             AudioFormat sourceFormat = audio.getFormat();
             AudioFormat targetFormat = new AudioFormat(
@@ -313,6 +313,11 @@ public class TTSUtils {
 
             // Write the audio data to a file in the WAV format
             File exportedFile = new File("temp\\export.wav");
+            // Create the directories if they don't exist
+            if (!exportedFile.getParentFile().exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                exportedFile.getParentFile().mkdirs();
+            }
             AudioSystem.write(exportStream, AudioFileFormat.Type.WAVE, exportedFile);
 
             if (exportAsMp3) {
@@ -404,6 +409,6 @@ public class TTSUtils {
     }
 
     public static MaryInterface getMaryInstance() {
-        return mary;
+        return MARY;
     }
 }

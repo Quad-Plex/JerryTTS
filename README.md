@@ -8,9 +8,8 @@
 M**ary** + **J**ava = *Jary* -> JerryTTS
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/39552449/209025976-cd9deaf2-7037-4ca1-9f60-2b9bb486c984.png" alt="screenshot" width="550" height="500">
+  <img src="[https://user-images.githubusercontent.com/39552449/209025976-cd9deaf2-7037-4ca1-9f60-2b9bb486c984.png](https://user-images.githubusercontent.com/39552449/209254579-d656edb3-8b73-4bf4-b05c-dbd9b440f988.png)" alt="screenshot" width="550" height="500">
 </p>
-
 
 
 Initially started out as a prompt to ChatGPT - 'Can you give me an example Text-To-Speech application done in Java?' 
@@ -22,10 +21,10 @@ to learn about Java GUI development and eventually switched over to MaryTTS when
 - 7 different languages (German, English (USA), English (UK), Turkish, Italian, French, Russian, Swedish)
 - 32 different voices across all languages
 - Separate Volume, Speed and Pitch control for the audio playback (major thanks to @waywardgeek's Sonic implementation https://github.com/waywardgeek/sonic)
-- Quickly export currently entered text as .wav to the Clipboard
+- Quickly export currently entered text as .wav **(NEW!! also as mp3)** to the Clipboard
 - Exported audio is affected by Volume, Speed and Pitch control
 - 'Loop' and 'Reverse' functions to loop or play the text in reverse
-- Automatically transcripts cyrillic <-> latin letters in russian mode to enable either latin/cyrillic writing to be spoken in russian
+- Automatically transcripts from cyrillic to latin letters in russian mode to enable either latin/cyrillic writing to be spoken in russian (Thanks to @kukicmilorad https://github.com/kukicmilorad/cyrlat)
 
 haven't thought about packaging/releasing yet, so everything is done through gradle/IntelliJ for the time being
 

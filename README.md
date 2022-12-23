@@ -14,7 +14,7 @@ M**ary** + **J**ava = *Jary* -> JerryTTS
 
 Initially started out as a prompt to ChatGPT - 'Can you give me an example Text-To-Speech application done in Java?' 
 which gave a very bare-bones Hello World application using the FreeTTS library - that I used as a good starting point, added a GUI
-to learn about Java GUI development and eventually switched over to MaryTTS when thinking of more features to add
+to, to learn about Java GUI development, and eventually switched over to MaryTTS when thinking of more features to add
 
 ### Features
 

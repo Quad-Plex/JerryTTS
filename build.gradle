@@ -118,6 +118,9 @@ dependencies {
         exclude group: 'gov.nist.math', module: 'Jampack'
     }
 
+    implementation group: 'ws.schild', name: 'jave-core', version: '2.4.2'
+
+
     implementation fileTree(dir: 'lib', includes: ['*.jar'])
 }
 

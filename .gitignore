@@ -5,3 +5,5 @@ log/
 *.class
 *.log
 lib/
+/temp/export.mp3
+/temp/export.wav

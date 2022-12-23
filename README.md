@@ -8,7 +8,7 @@
 M**ary** + **J**ava = *Jary* -> JerryTTS
 
 <p align="center">
-  <img src="[https://user-images.githubusercontent.com/39552449/209025976-cd9deaf2-7037-4ca1-9f60-2b9bb486c984.png](https://user-images.githubusercontent.com/39552449/209254579-d656edb3-8b73-4bf4-b05c-dbd9b440f988.png)" alt="screenshot" width="550" height="500">
+  <img src="https://user-images.githubusercontent.com/39552449/209254579-d656edb3-8b73-4bf4-b05c-dbd9b440f988.png" alt="screenshot" width="550" height="500">
 </p>
 
 

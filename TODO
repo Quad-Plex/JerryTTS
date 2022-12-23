@@ -1,3 +1,4 @@
+- update gradle download mary voices task to check if all voices are actually present
 - Reset button for sliders
 - cyrillic transcriptor toggle in textArea
 - export -> to clipboard/to file
